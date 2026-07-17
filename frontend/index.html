@@ -1,0 +1,1777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MapMantra - Regulatory Intelligence</title>
+<meta name="description" content="AI-powered regulatory compliance intelligence for Indian banks">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   MapMantra - Premium Glassmorphism Design System
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+:root {
+  --bg-deep: #030712;
+  --bg-primary: #070b14;
+  --bg-raised: #0c1322;
+  --glass-bg: rgba(15, 23, 42, 0.45);
+  --glass-bg-strong: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-border-hover: rgba(255, 255, 255, 0.14);
+  --glass-border-active: rgba(6, 182, 212, 0.3);
+  --blur: 20px;
+  --blur-strong: 32px;
+  --glow-cyan: 0 0 40px rgba(6,182,212,0.12), inset 0 0 40px rgba(6,182,212,0.03);
+  --glow-red: 0 0 30px rgba(239,68,68,0.12);
+  --glow-amber: 0 0 30px rgba(245,158,11,0.12);
+  --glow-green: 0 0 30px rgba(16,185,129,0.12);
+  --cyan: #06b6d4; --cyan-dim: rgba(6,182,212,0.15);
+  --blue: #3b82f6; --blue-dim: rgba(59,130,246,0.15);
+  --green: #10b981; --green-dim: rgba(16,185,129,0.15);
+  --amber: #f59e0b; --amber-dim: rgba(245,158,11,0.15);
+  --red: #ef4444; --red-dim: rgba(239,68,68,0.15);
+  --purple: #8b5cf6; --purple-dim: rgba(139,92,246,0.15);
+  --text-1: #f1f5f9; --text-2: #94a3b8; --text-3: #475569; --text-4: #334155;
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 20px; --radius-pill: 100px;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --sidebar-w: 240px; --topbar-h: 60px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { font-family: var(--font); background: var(--bg-deep); color: var(--text-1); overflow-x: hidden;
+  background-image: radial-gradient(ellipse at 20% 50%, rgba(6,182,212,0.04) 0%, transparent 50%),
+                     radial-gradient(ellipse at 80% 20%, rgba(139,92,246,0.03) 0%, transparent 50%);
+  min-height: 100vh; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+a { color: var(--cyan); text-decoration: none; }
+button { font-family: var(--font); cursor: pointer; border: none; outline: none; }
+input, textarea, select { font-family: var(--font); outline: none; }
+
+/* â”€â”€ Glass Primitives â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.glass { background: var(--glass-bg); backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur));
+  border: 1px solid var(--glass-border); border-radius: var(--radius-lg); transition: all 0.35s var(--ease); }
+.glass:hover { border-color: var(--glass-border-hover); }
+.glass-strong { background: var(--glass-bg-strong); backdrop-filter: blur(var(--blur-strong)); -webkit-backdrop-filter: blur(var(--blur-strong));
+  border: 1px solid var(--glass-border); border-radius: var(--radius-lg); }
+.glass-card { background: var(--glass-bg); backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur));
+  border: 1px solid var(--glass-border); border-radius: var(--radius-lg); padding: 20px; transition: all 0.35s var(--ease); }
+.glass-card:hover { border-color: var(--glass-border-hover); box-shadow: var(--glow-cyan); transform: translateY(-2px); }
+
+/* â”€â”€ Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.app-layout { display: flex; min-height: 100vh; }
+.sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w); padding: 0; z-index: 100;
+  background: rgba(10, 15, 28, 0.85); backdrop-filter: blur(var(--blur-strong)); -webkit-backdrop-filter: blur(var(--blur-strong));
+  border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; overflow: hidden; }
+.topbar { position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: var(--topbar-h); z-index: 90;
+  background: rgba(10, 15, 28, 0.75); backdrop-filter: blur(var(--blur-strong)); -webkit-backdrop-filter: blur(var(--blur-strong));
+  border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; padding: 0 24px; gap: 16px; }
+.main-area { margin-left: var(--sidebar-w); margin-top: var(--topbar-h); padding: 28px; flex: 1; min-height: calc(100vh - var(--topbar-h)); min-width: 0; overflow-x: hidden; }
+
+/* â”€â”€ Sidebar Components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.sb-brand { padding: 20px 18px 18px; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; gap: 12px; }
+.sb-logo { width: 38px; height: 38px; background: linear-gradient(135deg, var(--cyan), var(--blue)); border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; box-shadow: 0 0 20px rgba(6,182,212,0.3); }
+.brand-mark { position: relative; width: 38px; height: 38px; border-radius: 8px; flex-shrink: 0;
+  background: linear-gradient(145deg, rgba(7,12,24,0.95), rgba(16,28,48,0.95));
+  border: 1px solid rgba(125,211,252,0.28); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 34px rgba(0,0,0,0.28); }
+.brand-mark::before { content: ''; position: absolute; left: 9px; top: 8px; width: 20px; height: 22px;
+  background: linear-gradient(180deg, var(--cyan), #60a5fa); clip-path: polygon(0 0, 42% 0, 42% 58%, 100% 58%, 100% 100%, 0 100%); opacity: 0.95; }
+.brand-mark::after { content: ''; position: absolute; right: 8px; top: 8px; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green); box-shadow: 0 0 18px rgba(16,185,129,0.55); }
+.sb-title { font-size: 16px; font-weight: 800; color: var(--text-1); letter-spacing: -0.02em; }
+.sb-subtitle { font-size: 10px; color: var(--cyan); font-weight: 500; letter-spacing: 0.04em; }
+.sb-section { padding: 16px 12px 4px; }
+.sb-section-label { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; padding: 0 8px; margin-bottom: 6px; }
+.sb-link { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-md); color: var(--text-2);
+  font-size: 13px; font-weight: 500; transition: all 0.25s var(--ease); cursor: pointer; position: relative; border: 1px solid transparent; }
+.sb-link:hover { background: rgba(255,255,255,0.04); color: var(--text-1); }
+.sb-link.active { background: rgba(6,182,212,0.08); color: var(--cyan); border-color: rgba(6,182,212,0.15);
+  box-shadow: inset 0 0 20px rgba(6,182,212,0.05); }
+.sb-link.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 18px; background: var(--cyan); border-radius: 0 2px 2px 0; box-shadow: 0 0 8px var(--cyan); }
+.sb-icon { font-size: 16px; width: 22px; text-align: center; }
+.nav-code { width: 28px; height: 24px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 800; letter-spacing: 0.08em; color: var(--text-2); background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.06); }
+.sb-link.active .nav-code { color: var(--cyan); background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.24); }
+.sb-badge { margin-left: auto; padding: 1px 7px; border-radius: var(--radius-pill); font-size: 10px; font-weight: 700; }
+.sb-badge-amber { background: var(--amber-dim); color: var(--amber); }
+.sb-badge-red { background: var(--red-dim); color: var(--red); }
+
+/* â”€â”€ Topbar Components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.tb-tabs { display: flex; gap: 2px; margin-left: 20px; flex: 1; }
+.tb-tab { padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; color: var(--text-2);
+  background: transparent; transition: all 0.25s var(--ease); position: relative; }
+.tb-tab:hover { color: var(--text-1); background: rgba(255,255,255,0.04); }
+.tb-tab.active { color: var(--cyan); }
+.tb-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+  width: 60%; height: 2px; background: var(--cyan); border-radius: 2px; box-shadow: 0 0 8px var(--cyan); }
+.tb-right { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+.risk-pill { display: flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: var(--radius-pill);
+  font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s var(--ease); position: relative; }
+.risk-pill.high { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+.risk-pill.medium { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
+.risk-pill.low { background: var(--green-dim); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+.bell-btn { position: relative; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 16px;
+  color: var(--text-2); transition: all 0.25s var(--ease); }
+.bell-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-1); border-color: var(--glass-border-hover); }
+.bell-glyph { width: 15px; height: 15px; border: 1.8px solid currentColor; border-top: 0; border-radius: 0 0 8px 8px; position: relative; }
+.bell-glyph::before { content: ''; position: absolute; left: 2px; right: 2px; top: -6px; height: 9px; border: 1.8px solid currentColor; border-bottom: 0; border-radius: 8px 8px 0 0; }
+.bell-glyph::after { content: ''; position: absolute; left: 5px; bottom: -5px; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+.bell-dot { position: absolute; top: 6px; right: 7px; width: 7px; height: 7px; background: var(--red); border-radius: 50%;
+  border: 1.5px solid var(--bg-primary); }
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--blue));
+  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff;
+  border: 2px solid var(--glass-border); cursor: pointer; }
+
+/* â”€â”€ Notification Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.notif-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 340px; border-radius: var(--radius-lg);
+  background: rgba(10,15,28,0.95); backdrop-filter: blur(var(--blur-strong)); -webkit-backdrop-filter: blur(var(--blur-strong));
+  border: 1px solid var(--glass-border); box-shadow: 0 20px 60px rgba(0,0,0,0.5); z-index: 200; overflow: hidden; }
+.notif-header { padding: 14px 16px; border-bottom: 1px solid var(--glass-border); font-size: 13px; font-weight: 600; color: var(--text-1); }
+.notif-item { display: flex; gap: 10px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: background 0.2s var(--ease); cursor: pointer; }
+.notif-item:hover { background: rgba(255,255,255,0.03); }
+.notif-bar { width: 3px; border-radius: 2px; flex-shrink: 0; }
+.notif-footer { padding: 10px 16px; text-align: center; }
+.notif-footer a { font-size: 12px; color: var(--cyan); font-weight: 500; }
+
+/* â”€â”€ Risk Popover â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.risk-popover { position: absolute; top: calc(100% + 8px); right: 0; width: 280px; padding: 16px;
+  border-radius: var(--radius-lg); background: rgba(10,15,28,0.95); backdrop-filter: blur(var(--blur-strong));
+  border: 1px solid var(--glass-border); box-shadow: 0 20px 60px rgba(0,0,0,0.5); z-index: 200; }
+
+/* â”€â”€ Metric Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.metric-card { padding: 22px; cursor: pointer; position: relative; overflow: hidden; }
+.metric-card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; opacity: 0;
+  background: radial-gradient(600px at var(--mx,50%) var(--my,50%), rgba(6,182,212,0.06), transparent 60%);
+  transition: opacity 0.4s; pointer-events: none; }
+.metric-card:hover::before { opacity: 1; }
+.metric-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 10px; }
+.metric-value { font-size: 36px; font-weight: 900; line-height: 1; margin-bottom: 6px; letter-spacing: -0.03em; }
+.metric-desc { font-size: 11px; color: var(--text-3); }
+
+/* â”€â”€ Department Risk Bars â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.dept-row { display: flex; align-items: center; gap: 14px; padding: 8px 0; }
+.dept-name { font-size: 12px; font-weight: 500; color: var(--text-2); width: 90px; flex-shrink: 0; }
+.dept-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.04); border-radius: 3px; overflow: hidden; }
+.dept-bar-fill { height: 100%; border-radius: 3px; transition: width 1s var(--ease); position: relative; }
+.dept-bar-fill::after { content: ''; position: absolute; right: 0; top: -1px; bottom: -1px; width: 8px;
+  background: inherit; filter: blur(4px); border-radius: 50%; }
+.dept-score { font-size: 14px; font-weight: 700; width: 32px; text-align: right; }
+
+/* â”€â”€ Timeline / Activity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.timeline-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 14px; border-radius: var(--radius-md);
+  transition: all 0.2s var(--ease); cursor: pointer; }
+.timeline-item:hover { background: rgba(255,255,255,0.03); }
+.tl-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; box-shadow: 0 0 8px currentColor; }
+.tl-content { flex: 1; min-width: 0; }
+.tl-title { font-size: 12px; font-weight: 600; color: var(--text-1); }
+.tl-sub { font-size: 10px; color: var(--text-3); margin-top: 1px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.tl-time { font-size: 10px; color: var(--text-4); white-space: nowrap; margin-top: 4px; }
+
+/* â”€â”€ Badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 6px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+.attack-tag { display: inline-flex; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;
+  font-family: 'JetBrains Mono', 'SF Mono', monospace; background: var(--purple-dim); color: var(--purple);
+  border: 1px solid rgba(139,92,246,0.2); }
+
+/* â”€â”€ Conflict Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.conflict-banner { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.15); border-left: 3px solid var(--red);
+  border-radius: var(--radius-lg); padding: 16px 20px; display: flex; align-items: center; gap: 16px; margin-top: 20px;
+  backdrop-filter: blur(12px); }
+
+/* â”€â”€ Cards & Rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.reg-card { padding: 16px 18px; margin-bottom: 8px; cursor: pointer; }
+.reg-card:hover { box-shadow: var(--glow-cyan); }
+.map-card { padding: 14px 16px; margin-bottom: 10px; cursor: pointer; }
+.map-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.25), var(--glow-cyan); }
+.map-card.overdue { border-left: 3px solid var(--red); }
+.map-card.conflict-card { border-left: 3px solid var(--amber); }
+.map-card.dragging { opacity: 0.4; transform: scale(0.95); }
+
+/* â”€â”€ Kanban â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.kanban-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.kanban-col { min-height: 300px; }
+.kanban-header { padding: 10px 14px; border-radius: var(--radius-md) var(--radius-md) 0 0; font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em; display: flex; justify-content: space-between; align-items: center; }
+.kanban-body { padding: 8px; min-height: 200px; border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: rgba(255,255,255,0.01); border: 1px dashed transparent; transition: all 0.3s; }
+.kanban-body.drag-over { border-color: var(--cyan); background: rgba(6,182,212,0.03); }
+.kanban-count { padding: 2px 8px; border-radius: var(--radius-pill); font-size: 10px; background: rgba(255,255,255,0.08); }
+
+/* â”€â”€ Inputs & Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.input { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md); color: var(--text-1); font-size: 13px; transition: all 0.25s var(--ease); }
+.input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(6,182,212,0.1); }
+.input::placeholder { color: var(--text-4); }
+.textarea { min-height: 120px; resize: vertical; }
+.select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+.btn { padding: 9px 20px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; transition: all 0.25s var(--ease); }
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-primary:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 15px rgba(59,130,246,0.3); }
+.btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+.btn-danger:hover { background: rgba(239,68,68,0.2); }
+.btn-outline { background: transparent; color: var(--text-2); border: 1px solid var(--glass-border); }
+.btn-outline:hover { border-color: var(--glass-border-hover); color: var(--text-1); background: rgba(255,255,255,0.04); }
+.btn-ghost { background: transparent; color: var(--text-2); padding: 6px 12px; }
+.btn-ghost:hover { color: var(--text-1); background: rgba(255,255,255,0.04); }
+.chip { display: inline-flex; padding: 5px 14px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 500;
+  background: rgba(255,255,255,0.04); color: var(--text-2); border: 1px solid var(--glass-border); transition: all 0.2s var(--ease); cursor: pointer; }
+.chip:hover { background: rgba(255,255,255,0.08); color: var(--text-1); }
+.chip.active { background: var(--cyan-dim); color: var(--cyan); border-color: rgba(6,182,212,0.3); }
+
+/* â”€â”€ Verdict Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.verdict-card { border-radius: var(--radius-lg); padding: 20px; margin-top: 16px; }
+.verdict-satisfied { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); }
+.verdict-partial { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); }
+.verdict-failed { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
+
+/* â”€â”€ Skeleton Loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
+  background-size: 400% 100%; border-radius: var(--radius-sm); animation: shimmer 1.8s infinite; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* â”€â”€ Sortable Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.data-table th { padding: 10px 14px; font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em;
+  font-weight: 600; text-align: left; cursor: pointer; user-select: none; border-bottom: 1px solid var(--glass-border); }
+.data-table th:hover { color: var(--text-1); }
+.data-table td { padding: 12px 14px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.data-table tr { transition: background 0.2s; }
+.data-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.sort-arrow { margin-left: 4px; font-size: 10px; }
+
+/* â”€â”€ Expandable â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.expand-row { background: rgba(0,0,0,0.2); }
+.expand-content { padding: 16px 20px; border-top: 1px solid var(--glass-border); animation: slideDown 0.3s var(--ease); }
+
+/* â”€â”€ Animations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideDown { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 500px; } }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 currentColor; } 50% { box-shadow: 0 0 0 6px transparent; } }
+@keyframes pulseGlow { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+@keyframes barGrow { from { width: 0%; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.animate-in { animation: fadeIn 0.4s var(--ease) both; }
+.pulse-anim { animation: pulse 2s infinite; }
+.glow-pulse { animation: pulseGlow 2s infinite; }
+.spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.2); border-top-color: var(--cyan);
+  border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; }
+
+/* â”€â”€ Utilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.flex { display: flex; } .flex-col { flex-direction: column; } .items-center { align-items: center; }
+.justify-between { justify-content: space-between; } .gap-2 { gap: 8px; } .gap-3 { gap: 12px; } .gap-4 { gap: 16px; }
+.flex-1 { flex: 1; } .flex-wrap { flex-wrap: wrap; } .w-full { width: 100%; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.mt-2 { margin-top: 8px; } .mt-4 { margin-top: 16px; } .mt-6 { margin-top: 24px; }
+.mb-2 { margin-bottom: 8px; } .mb-4 { margin-bottom: 16px; }
+.text-xs { font-size: 10px; } .text-sm { font-size: 12px; } .text-lg { font-size: 18px; } .text-xl { font-size: 24px; }
+.font-bold { font-weight: 700; } .font-black { font-weight: 900; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.page-title { font-size: 22px; font-weight: 800; color: var(--text-1); letter-spacing: -0.02em; }
+.section-title { font-size: 14px; font-weight: 700; color: var(--text-1); margin-bottom: 14px; }
+
+/* Enterprise console refinement */
+:root {
+  --radius-md: 8px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+  --glass-bg: rgba(12, 18, 31, 0.78);
+  --glass-bg-strong: rgba(10, 15, 26, 0.92);
+  --glass-border: rgba(148, 163, 184, 0.12);
+  --glass-border-hover: rgba(125, 211, 252, 0.28);
+  --text-3: #64748b;
+  --text-4: #475569;
+}
+body {
+  background:
+    linear-gradient(180deg, rgba(2,6,23,1) 0%, rgba(7,12,24,1) 52%, rgba(3,7,18,1) 100%),
+    linear-gradient(90deg, rgba(6,182,212,0.05), rgba(16,185,129,0.035), rgba(59,130,246,0.04));
+  background-blend-mode: normal, screen;
+}
+.sidebar { background: rgba(5, 10, 20, 0.96); box-shadow: 1px 0 0 rgba(255,255,255,0.03); }
+.topbar { background: rgba(8, 13, 24, 0.92); box-shadow: 0 1px 0 rgba(255,255,255,0.03); }
+.glass-card { box-shadow: 0 16px 36px rgba(0,0,0,0.22); }
+.glass-card:hover { transform: translateY(-1px); box-shadow: 0 18px 44px rgba(0,0,0,0.28); }
+.page-title { font-size: 28px; letter-spacing: 0; }
+.section-title { letter-spacing: 0.08em; text-transform: uppercase; font-size: 12px; color: var(--text-2); }
+.metric-card { padding: 18px; }
+.metric-value { font-size: 32px; letter-spacing: 0; }
+.btn { border-radius: 7px; }
+.tb-tab, .sb-title { letter-spacing: 0; }
+.sb-subtitle { color: var(--text-2); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+<script type="text/babel">
+/* ────────────────────────────────────────────────────────────────────────────
+   MapMantra - React Application
+   ──────────────────────────────────────────────────────────────────────────── */
+const { useState, useEffect, useCallback, useRef, useMemo } = React;
+const API = window.location.origin;
+
+// ── API Helper ──────────────────────────────────────────────────────────────
+async function api(endpoint, opts = {}) {
+  try {
+    const r = await fetch(`${API}${endpoint}`, { ...opts, headers: { 'Content-Type': 'application/json', ...opts.headers } });
+    if (!r.ok) throw new Error(r.statusText);
+    return r.json();
+  } catch (e) { console.error(`API ${endpoint}:`, e); return null; }
+}
+async function apiForm(endpoint, formData) {
+  try {
+    const r = await fetch(`${API}${endpoint}`, { method: 'POST', body: formData });
+    if (!r.ok) throw new Error(r.statusText);
+    return r.json();
+  } catch (e) { console.error(`API ${endpoint}:`, e); return null; }
+}
+
+// ── Hooks ──────────────────────────────────────────────────────────────────
+function useApi(endpoint, deps = []) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const fetch_ = useCallback(async () => {
+    if (!endpoint) return;
+    setLoading(true);
+    setError(null);
+    const d = await api(endpoint);
+    if (d === null) {
+      setError('Connection refused or API returned an error.');
+    } else {
+      setData(d);
+    }
+    setLoading(false);
+  }, [endpoint, ...deps]);
+  useEffect(() => { fetch_(); }, [fetch_]);
+  return { data, loading, error, refetch: fetch_ };
+}
+function usePolling(endpoint, interval = 30000) {
+  const { data, loading, error, refetch } = useApi(endpoint);
+  useEffect(() => { const id = setInterval(refetch, interval); return () => clearInterval(id); }, [refetch, interval]);
+  return { data, loading, error, refetch };
+}
+
+// â”€â”€ Utils â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const riskColor = s => s >= 60 ? 'var(--red)' : s >= 30 ? 'var(--amber)' : 'var(--green)';
+const riskLevel = s => s >= 60 ? 'high' : s >= 30 ? 'medium' : 'low';
+const statusColor = s => ({completed:'var(--green)',pass:'var(--green)',satisfied:'var(--green)',assigned:'var(--blue)',
+  in_progress:'var(--blue)',pending:'var(--text-3)',partial:'var(--amber)',overdue:'var(--red)',failed:'var(--red)',
+  fail:'var(--red)',conflict:'var(--red)',superseded:'var(--text-4)'}[s] || 'var(--text-3)');
+const priorityColor = p => ({high:'var(--red)',medium:'var(--amber)',low:'var(--green)'}[p] || 'var(--text-3)');
+const agentColor = a => ({ingestion:'var(--cyan)',extractor:'var(--purple)',router:'#14b8a6',validator:'var(--amber)',
+  supervisor:'var(--text-3)',conflict_detector:'var(--red)',threat_mapper:'var(--purple)',risk_engine:'var(--green)'}[a] || 'var(--text-3)');
+function timeAgo(iso) {
+  if (!iso) return '';
+  try { const d = new Date(iso), diff = (Date.now() - d) / 1000;
+    if (diff < 60) return 'just now'; if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff/3600)}h ago`; return `${Math.floor(diff/86400)}d ago`;
+  } catch { return ''; }
+}
+function daysRemaining(d) {
+  if (!d) return { days: null, color: 'var(--text-3)' };
+  const diff = Math.ceil((new Date(d) - Date.now()) / 86400000);
+  return { days: diff, color: diff < 0 ? 'var(--red)' : diff <= 7 ? 'var(--amber)' : 'var(--green)' };
+}
+
+// â”€â”€ Shared Components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function Skeleton({ w = '100%', h = '16px', r = '6px' }) {
+  return <div className="skeleton" style={{ width: w, height: h, borderRadius: r }} />;
+}
+function Badge({ label, color, bg }) {
+  return <span className="badge" style={{ background: bg || `${color}18`, color, border: `1px solid ${color}30` }}>{label}</span>;
+}
+function AnimatedBar({ pct, color, delay = 0 }) {
+  const [w, setW] = useState(0);
+  useEffect(() => { const t = setTimeout(() => setW(Math.min(pct, 100)), 100 + delay); return () => clearTimeout(t); }, [pct, delay]);
+  return <div className="dept-bar"><div className="dept-bar-fill" style={{ width: `${w}%`, background: color }} /></div>;
+}
+function GlassCard({ children, className = '', style, onClick, onMouseMove }) {
+  return <div className={`glass-card ${className}`} style={style} onClick={onClick} onMouseMove={onMouseMove}>{children}</div>;
+}
+
+// â”€â”€ Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function Sidebar({ page, navigate, counts }) {
+  const links = [
+    { id: 'dashboard', code: 'DB', label: 'Dashboard', section: 'OVERVIEW' },
+    { id: 'inbox', code: 'IN', label: 'Regulation Inbox', section: 'OVERVIEW', badge: counts.newRegs, badgeType: 'amber' },
+    { id: 'maps', code: 'MP', label: 'MAP Board', section: 'COMPLIANCE' },
+    { id: 'conflicts', code: 'CF', label: 'Conflicts', section: 'COMPLIANCE', badge: counts.conflicts, badgeType: 'red' },
+    { id: 'threat', code: 'TI', label: 'Threat Intel', section: 'COMPLIANCE' },
+    { id: 'audit', code: 'AU', label: 'Audit Trail', section: 'REPORTS' },
+    { id: 'risk', code: 'RK', label: 'Risk Report', section: 'REPORTS' },
+  ];
+  let lastSection = '';
+  return (
+    <nav className="sidebar">
+      <div className="sb-brand">
+        <div className="brand-mark"></div>
+        <div><div className="sb-title">MapMantra</div><div className="sb-subtitle">Regulatory Intelligence</div></div>
+      </div>
+      <div style={{ flex: 1, padding: '8px 0', overflowY: 'auto' }}>
+        {links.map(l => {
+          const showSection = l.section !== lastSection;
+          lastSection = l.section;
+          return (
+            <React.Fragment key={l.id}>
+              {showSection && <div className="sb-section"><div className="sb-section-label">{l.section}</div></div>}
+              <div style={{ padding: '0 8px' }}>
+                <div className={`sb-link ${page === l.id ? 'active' : ''}`} onClick={() => navigate(l.id)}>
+                  <span className="nav-code">{l.code}</span><span>{l.label}</span>
+                  {l.badge > 0 && <span className={`sb-badge sb-badge-${l.badgeType}`}>{l.badge}</span>}
+                </div>
+              </div>
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
+// ── Topbar ───────────────────────────────────────────────────────────────
+function Topbar({ page, navigate, dashboard, onExportCSV, onDownloadReport }) {
+  const [showNotif, setShowNotif] = useState(false);
+  const [showRisk, setShowRisk] = useState(false);
+  const risk = dashboard?.risk || {};
+  const score = risk.global_score || 0;
+  const activity = dashboard?.recent_activity || [];
+  const tabs = [
+    { id: 'dashboard', label: 'Dashboard' }, { id: 'maps', label: 'MAP Board' }, { id: 'inbox', label: 'Circulars' },
+    { id: 'conflicts', label: 'Conflicts' }, { id: 'threat', label: 'Threat Intel' }, { id: 'audit', label: 'Audit Trail' },
+  ];
+
+  useEffect(() => {
+    const close = (e) => { if (!e.target.closest('.risk-pill-wrap,.notif-wrap')) { setShowNotif(false); setShowRisk(false); } };
+    document.addEventListener('click', close); return () => document.removeEventListener('click', close);
+  }, []);
+
+  return (
+    <header className="topbar">
+      <div className="tb-tabs">
+        {tabs.map(t => <button key={t.id} className={`tb-tab ${page===t.id?'active':''}`} onClick={()=>navigate(t.id)}>{t.label}</button>)}
+      </div>
+      <div className="tb-right">
+        <div className="risk-pill-wrap" style={{ position: 'relative' }}>
+          <div className={`risk-pill ${riskLevel(score)}`} onClick={() => setShowRisk(!showRisk)}>
+            Risk Score {score}
+          </div>
+          {showRisk && (
+            <div className="risk-popover animate-in">
+              <div className="font-bold mb-2">Risk Score: {score}/100</div>
+              <div className="text-sm" style={{ color: 'var(--text-3)' }}>Based on overdue items, conflicts, and pending actions.</div>
+              <button className="btn btn-outline mt-4 w-full" style={{ fontSize: 12 }} onClick={() => { navigate('risk'); setShowRisk(false); }}>View Full Report</button>
+            </div>
+          )}
+        </div>
+        <div className="notif-wrap" style={{ position: 'relative' }}>
+          <button className="bell-btn" aria-label="Recent activity" onClick={() => setShowNotif(!showNotif)}>
+            <span className="bell-glyph"></span>{activity.length > 0 && <span className="bell-dot"></span>}
+          </button>
+          {showNotif && (
+            <div className="notif-dropdown animate-in">
+              <div className="notif-header">Recent Activity</div>
+              {activity.length > 0 ? activity.slice(0, 5).map((a, i) => (
+                <div key={i} className="notif-item">
+                  <div className="notif-bar" style={{ background: agentColor(a.agent) }}></div>
+                  <div>
+                    <div className="text-xs" style={{ color: 'var(--text-2)' }}>{timeAgo(a.timestamp)} / {a.agent}</div>
+                    <div className="text-sm font-bold" style={{marginTop:4}}>{a.action}</div>
+                  </div>
+                </div>
+              )) : <div style={{padding:16,textAlign:'center',color:'var(--text-3)',fontSize:12}}>No recent activity</div>}
+              <div className="notif-footer"><a href="#" onClick={(e) => { e.preventDefault(); navigate('audit'); setShowNotif(false); }}>View Audit Trail</a></div>
+            </div>
+          )}
+        </div>
+        <button className="btn btn-outline" style={{fontSize:11,padding:'6px 12px'}} onClick={onExportCSV}>Export</button>
+        <button className="btn btn-primary" style={{fontSize:11,padding:'6px 12px'}} onClick={onDownloadReport}>Report</button>
+        <div id="user-profile-display" className="avatar">AD</div>
+      </div>
+    </header>
+  );
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// DASHBOARD SCREEN
+// ════════════════════════════════════════════════════════════════════
+function DashboardScreen({ dashboard, navigate }) {
+  if (!dashboard) return <div className="flex items-center gap-2 mt-4"><div className="spinner" /> Loading dashboard...</div>;
+
+  const risk = dashboard.risk || {};
+  const maps = dashboard.maps || {};
+  const score = risk.global_score || 0;
+  const departments = risk.departments || {};
+  const fin = risk.financial_exposure || {};
+  const breakdown = risk.breakdown || {};
+  const activity = dashboard.recent_activity || [];
+
+  const statCards = [
+    { label: 'Total MAPs', value: maps.total || 0, color: 'var(--cyan)' },
+    { label: 'In Progress', value: maps.in_progress || 0, color: 'var(--blue)' },
+    { label: 'Completed', value: maps.completed || 0, color: 'var(--green)' },
+    { label: 'Overdue', value: maps.overdue || 0, color: 'var(--red)' },
+    { label: 'Conflicts', value: dashboard.conflicts || 0, color: 'var(--amber)' },
+    { label: 'New Circulars', value: dashboard.new_circulars || 0, color: 'var(--purple)' },
+  ];
+
+  return (
+    <div className="animate-in">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h1 className="page-title">Compliance Dashboard</h1>
+          <div className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>Real-time regulatory compliance overview</div>
+        </div>
+      </div>
+
+      {/* Stat cards row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12 }} className="mb-4">
+        {statCards.map((c, i) => (
+          <GlassCard key={i} style={{ padding: '16px', textAlign: 'center' }}>
+            <div className="text-xs" style={{ color: 'var(--text-4)', marginBottom: 6 }}>{c.label}</div>
+            <div style={{ fontSize: 28, fontWeight: 900, color: c.color }}>{c.value}</div>
+          </GlassCard>
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+        {/* Department breakdown */}
+        <GlassCard style={{ padding: 20 }}>
+          <div className="section-title">Department Compliance</div>
+          {Object.entries(departments).map(([dept, d]) => (
+            <div key={dept} style={{ marginBottom: 14 }}>
+              <div className="flex justify-between items-center" style={{ marginBottom: 4 }}>
+                <div className="text-sm font-bold">{dept}</div>
+                <div className="flex gap-2 items-center">
+                  <span className="text-xs" style={{ color: 'var(--text-3)' }}>{d.completed}/{d.total} done</span>
+                  <Badge label={`Risk ${d.score}`} color={riskColor(d.score)} />
+                </div>
+              </div>
+              <AnimatedBar pct={d.total > 0 ? (d.completed / d.total) * 100 : 0} color="var(--cyan)" delay={0} />
+            </div>
+          ))}
+        </GlassCard>
+
+        {/* Recent activity feed */}
+        <GlassCard style={{ padding: 20 }}>
+          <div className="section-title">Recent Activity</div>
+          {activity.length > 0 ? activity.slice(0, 8).map((a, i) => (
+            <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
+              <div style={{ width: 3, borderRadius: 2, background: agentColor(a.agent), flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="text-xs" style={{ color: 'var(--text-3)' }}>{timeAgo(a.timestamp)} / {a.agent}</div>
+                <div className="text-sm truncate" style={{ marginTop: 2 }}>{a.action}</div>
+              </div>
+            </div>
+          )) : <div className="text-sm" style={{ color: 'var(--text-3)', padding: 20, textAlign: 'center' }}>No recent activity</div>}
+        </GlassCard>
+      </div>
+
+      {/* Risk breakdown */}
+      <div className="grid-2 mt-4">
+        <GlassCard style={{ padding: 16 }}>
+          <div className="section-title">Risk Breakdown</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+            <div><div className="text-xs" style={{color:'var(--text-4)'}}>Overdue (High)</div><div className="text-sm font-bold mt-2" style={{color:'var(--red)'}}>{breakdown.overdue_high || 0}</div></div>
+            <div><div className="text-xs" style={{color:'var(--text-4)'}}>Overdue (Med)</div><div className="text-sm font-bold mt-2" style={{color:'var(--amber)'}}>{breakdown.overdue_medium || 0}</div></div>
+            <div><div className="text-xs" style={{color:'var(--text-4)'}}>Unresolved Conflicts</div><div className="text-sm font-bold mt-2" style={{color:'var(--red)'}}>{breakdown.conflicts_unresolved || 0}</div></div>
+          </div>
+        </GlassCard>
+        <GlassCard style={{ padding: 16 }}>
+          <div className="section-title">Financial Exposure</div>
+          <div className="grid-2" style={{ gap: 12 }}>
+            <div style={{textAlign:'center'}}>
+              <div className="text-xs" style={{color:'var(--text-4)'}}>Minimum</div>
+              <div style={{fontSize:24,fontWeight:900,color:'var(--amber)',margin:'8px 0'}}>INR {fin.min_cr||0} Cr</div>
+            </div>
+            <div style={{textAlign:'center'}}>
+              <div className="text-xs" style={{color:'var(--text-4)'}}>Maximum</div>
+              <div style={{fontSize:24,fontWeight:900,color:'var(--red)',margin:'8px 0'}}>INR {fin.max_cr||0} Cr</div>
+            </div>
+          </div>
+          <div className="text-xs" style={{color:'var(--text-3)',textAlign:'center',marginTop:8}}>{fin.overdue_count||0} overdue items contributing</div>
+        </GlassCard>
+      </div>
+    </div>
+  );
+}
+
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// INBOX SCREEN
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function InboxScreen({ navigate }) {
+  const { data: regs, loading, refetch } = usePolling('/api/regulations', 30000);
+  const [uploading, setUploading] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+  const [triggeringPipeline, setTriggeringPipeline] = useState(false);
+  const [pipelineStatus, setPipelineStatus] = useState(null);
+  const [uploadResult, setUploadResult] = useState(null);
+
+  const handleUpload = async (e) => {
+    e.preventDefault();
+    setUploading(true);
+    setUploadResult(null);
+    const fd = new FormData(e.target);
+    try {
+      const result = await apiForm('/api/regulations/upload', fd);
+      if (result) {
+        setUploadResult({ success: true, message: 'Circular uploaded successfully! Pipeline processing started.' });
+        e.target.reset();
+        setTimeout(() => { setShowUpload(false); setUploadResult(null); }, 4000);
+      } else {
+        setUploadResult({ success: false, message: 'Upload failed. Please check the file and try again.' });
+      }
+    } catch (err) {
+      setUploadResult({ success: false, message: 'Upload failed: ' + (err.message || 'Unknown error') });
+    }
+    setUploading(false);
+    refetch();
+  };
+
+  const triggerPipeline = async () => {
+    setTriggeringPipeline(true);
+    setPipelineStatus('starting');
+    try {
+      const r = await fetch(`/api/pipeline/trigger`, { method: 'POST' });
+      if (r.ok) {
+        setPipelineStatus('running');
+        const pollInterval = setInterval(async () => {
+          try {
+            const statusResp = await fetch(`/api/pipeline/status`);
+            const status = await statusResp.json();
+            if (!status.running) {
+              clearInterval(pollInterval);
+              setPipelineStatus(status.last_error ? 'error' : 'completed');
+              setTriggeringPipeline(false);
+              refetch();
+              setTimeout(() => setPipelineStatus(null), 5000);
+            }
+          } catch {
+            clearInterval(pollInterval);
+            setTriggeringPipeline(false);
+            setPipelineStatus(null);
+          }
+        }, 3000);
+        setTimeout(() => { clearInterval(pollInterval); setTriggeringPipeline(false); setPipelineStatus(null); refetch(); }, 610000);
+      } else {
+        setPipelineStatus('error');
+        setTriggeringPipeline(false);
+        setTimeout(() => setPipelineStatus(null), 4000);
+      }
+    } catch {
+      setPipelineStatus('error');
+      setTriggeringPipeline(false);
+      setTimeout(() => setPipelineStatus(null), 4000);
+    }
+  };
+
+  return (
+    <div className="animate-in" style={{ maxWidth: '100%', overflowX: 'hidden', paddingRight: '10px' }}>
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h1 className="page-title">Regulation Inbox</h1>
+          <div className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>Ingested regulatory circulars</div>
+        </div>
+        <div className="flex gap-2">
+          <button className="btn btn-outline" onClick={triggerPipeline} disabled={triggeringPipeline}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 140 }}>
+            {triggeringPipeline
+              ? <><span className="spinner" style={{width:14,height:14}}/>Running...</>
+              : <><span style={{display:'inline-block',fontSize:16,lineHeight:1}}>&#x21bb;</span> Run Pipeline</>}
+          </button>
+          <button className="btn btn-primary" onClick={() => setShowUpload(!showUpload)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{fontSize:16,lineHeight:1,fontWeight:700}}>+</span> Upload Circular
+          </button>
+        </div>
+      </div>
+
+      {pipelineStatus && (
+        <div className="mb-4" style={{
+          padding: '12px 18px', borderRadius: 'var(--radius-md)',
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: pipelineStatus === 'completed' ? 'rgba(16,185,129,0.08)' : pipelineStatus === 'error' ? 'rgba(239,68,68,0.08)' : 'rgba(6,182,212,0.08)',
+          border: `1px solid ${pipelineStatus === 'completed' ? 'rgba(16,185,129,0.3)' : pipelineStatus === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(6,182,212,0.3)'}`,
+          color: pipelineStatus === 'completed' ? 'var(--green)' : pipelineStatus === 'error' ? 'var(--red)' : 'var(--cyan)',
+          fontSize: 13, fontWeight: 600, animation: 'fadeIn 0.3s ease'
+        }}>
+          {pipelineStatus === 'running' && <span className="spinner" style={{width:14,height:14}}/>}
+          {pipelineStatus === 'starting' && 'Starting pipeline...'}
+          {pipelineStatus === 'running' && 'Pipeline is running - ingesting circulars and processing MAPs...'}
+          {pipelineStatus === 'completed' && 'Pipeline completed successfully!'}
+          {pipelineStatus === 'error' && 'Pipeline encountered an error. Check the audit trail for details.'}
+        </div>
+      )}
+
+      {showUpload && (
+        <GlassCard className="mb-4">
+          <div className="section-title">Upload New Circular</div>
+          {uploadResult && (
+            <div className="mb-4" style={{
+              padding: '10px 14px', borderRadius: 'var(--radius-sm)',
+              background: uploadResult.success ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
+              border: `1px solid ${uploadResult.success ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
+              color: uploadResult.success ? 'var(--green)' : 'var(--red)',
+              fontSize: 12, fontWeight: 600
+            }}>
+              {uploadResult.message}
+            </div>
+          )}
+          <form onSubmit={handleUpload}>
+            <div className="grid-2 gap-3">
+              <div>
+                <label className="text-xs" style={{color:'var(--text-3)',display:'block',marginBottom:6}}>Title *</label>
+                <input name="title" required className="input" placeholder="e.g., RBI Master Direction on IT Governance" style={{width:'100%',background:'rgba(255,255,255,0.04)',border:'1px solid var(--glass-border)',borderRadius:'var(--radius-sm)',padding:'8px 12px',color:'var(--text-1)',fontSize:13}} />
+              </div>
+              <div>
+                <label className="text-xs" style={{color:'var(--text-3)',display:'block',marginBottom:6}}>Source</label>
+                <select name="source" defaultValue="RBI" className="input select" style={{width:'100%',background:'rgba(255,255,255,0.04)',border:'1px solid var(--glass-border)',borderRadius:'var(--radius-sm)',padding:'8px 12px',color:'var(--text-1)',fontSize:13}}>
+                  <option value="RBI">RBI</option>
+                  <option value="SEBI">SEBI</option>
+                  <option value="IRDAI">IRDAI</option>
+                </select>
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="text-xs" style={{color:'var(--text-3)',display:'block',marginBottom:6}}>PDF Document *</label>
+              <input type="file" name="file" accept=".pdf" required className="input" style={{width:'100%',background:'rgba(255,255,255,0.04)',border:'1px solid var(--glass-border)',borderRadius:'var(--radius-sm)',padding:'8px 12px',color:'var(--text-1)',fontSize:13}} />
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button type="submit" className="btn btn-primary" disabled={uploading} style={{display:'flex',alignItems:'center',gap:6}}>
+                {uploading ? <><span className="spinner" style={{width:12,height:12}}/>Uploading...</> : 'Upload & Run Pipeline'}
+              </button>
+              <button type="button" className="btn btn-outline" onClick={() => { setShowUpload(false); setUploadResult(null); }}>Cancel</button>
+            </div>
+          </form>
+        </GlassCard>
+      )}
+
+      {loading && !regs ? <div className="flex items-center gap-2"><div className="spinner" /> Loading...</div> : (
+        <div>
+          {(regs || []).map(r => (
+            <GlassCard key={r.id} className="mb-2" style={{ padding: '16px 20px' }}>
+              <div className="flex justify-between items-center">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="flex gap-2 items-center mb-1">
+                    <Badge label={r.source || 'Manual'} color="var(--cyan)" />
+                    <Badge label={r.status} color={statusColor(r.status)} />
+                  </div>
+                  <div className="font-bold truncate">{r.title}</div>
+                  <div className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>Ingested {timeAgo(r.ingested_at)} / {r.map_count || 0} MAPs extracted</div>
+                </div>
+              </div>
+            </GlassCard>
+          ))}
+          {(!regs || regs.length === 0) && <div className="text-sm" style={{ color: 'var(--text-3)', textAlign: 'center', padding: 40 }}>No regulations ingested yet. Upload a circular or run the pipeline.</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// MAP BOARD SCREEN
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function MapBoardScreen({ navigate }) {
+  const { data: maps, loading, refetch } = usePolling('/api/maps?limit=500', 15000);
+  const [filter, setFilter] = useState('all');
+  const [deptFilter, setDeptFilter] = useState('all');
+  const [selectedMap, setSelectedMap] = useState(null);
+
+  const filtered = useMemo(() => {
+    if (!maps) return [];
+    let f = maps;
+    if (filter !== 'all') f = f.filter(m => m.status === filter);
+    if (deptFilter !== 'all') f = f.filter(m => m.department === deptFilter);
+    return f;
+  }, [maps, filter, deptFilter]);
+
+  const statuses = ['all', 'pending', 'in_progress', 'completed', 'partial', 'overdue', 'conflict'];
+  const departments = useMemo(() => {
+    if (!maps) return [];
+    return ['all', ...new Set(maps.map(m => m.department).filter(Boolean))];
+  }, [maps]);
+
+  const counts = useMemo(() => {
+    if (!maps) return {};
+    const c = {};
+    maps.forEach(m => { c[m.status] = (c[m.status] || 0) + 1; });
+    c.all = maps.length;
+    return c;
+  }, [maps]);
+
+  if (selectedMap) {
+    return <MapDetailScreen mapId={selectedMap} navigate={navigate} onBack={() => setSelectedMap(null)} />;
+  }
+
+  return (
+    <div className="animate-in">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h1 className="page-title">MAP Board</h1>
+          <div className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>{maps ? maps.length : 0} total compliance actions</div>
+        </div>
+      </div>
+
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {statuses.map(s => (
+          <button key={s} className={`tb-tab ${filter === s ? 'active' : ''}`}
+            style={{ fontSize: 12, padding: '6px 14px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--glass-border)', background: filter === s ? 'rgba(6,182,212,0.1)' : 'transparent' }}
+            onClick={() => setFilter(s)}>
+            {s === 'all' ? 'All' : s.replace(/_/g, ' ')} {counts[s] ? `(${counts[s]})` : ''}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex gap-2 mb-4">
+        <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)}
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', color: 'var(--text-1)', fontSize: 12 }}>
+          {departments.map(d => <option key={d} value={d}>{d === 'all' ? 'All Departments' : d}</option>)}
+        </select>
+      </div>
+
+      {loading && !maps ? <div className="flex items-center gap-2"><div className="spinner" /> Loading...</div> : (
+        <div>
+          {filtered.map(m => {
+            const dr = daysRemaining(m.deadline_date);
+            return (
+              <GlassCard key={m.id} className="mb-2" style={{ padding: '14px 18px', cursor: 'pointer' }} onClick={() => setSelectedMap(m.id)}>
+                <div className="flex justify-between items-center">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="flex gap-2 items-center mb-1">
+                      <Badge label={m.status} color={statusColor(m.status)} />
+                      <Badge label={m.priority || 'medium'} color={priorityColor(m.priority)} />
+                      <Badge label={m.department} color="var(--cyan)" />
+                      {(m.attack_techniques||'').split(',').filter(Boolean).map(t => <span key={t} className="attack-tag">{t.trim()}</span>)}
+                    </div>
+                    <div className="text-sm font-bold truncate">{m.action_description}</div>
+                    <div className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>
+                      Metric: {m.compliance_metric} / Deadline: {(m.deadline_date||'').slice(0,10)}
+                      {dr.days !== null && <span style={{ color: dr.color, marginLeft: 8 }}>{dr.days < 0 ? `${Math.abs(dr.days)}d overdue` : `${dr.days}d left`}</span>}
+                    </div>
+                  </div>
+                </div>
+              </GlassCard>
+            );
+          })}
+          {filtered.length === 0 && <div className="text-sm" style={{ color: 'var(--text-3)', textAlign: 'center', padding: 40 }}>No MAPs match your filter.</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// MAP DETAIL SCREEN
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function MapDetailScreen({ mapId, navigate, onBack }) {
+  const actualId = mapId || window.__selectedMapId;
+  const { data, loading, refetch } = useApi(actualId ? `/api/maps/${actualId}` : null, [actualId]);
+  const [evidenceText, setEvidenceText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitResult, setSubmitResult] = useState(null);
+
+  if (!actualId) return <div className="text-sm" style={{ color: 'var(--text-3)', padding: 40, textAlign: 'center' }}>Select a MAP from the board to view details.</div>;
+  if (loading || !data) return <div className="flex items-center gap-2 mt-4"><div className="spinner" /> Loading MAP details...</div>;
+
+  const m = data.map;
+  const evidence = data.evidence_history || [];
+  const siblings = data.siblings || [];
+  const reg = data.regulation || {};
+  const dr = daysRemaining(m.deadline_date);
+
+  const submitEvidence = async (e) => {
+    e.preventDefault();
+    if (!evidenceText.trim()) return;
+    setSubmitting(true);
+    setSubmitResult(null);
+    const fd = new FormData(e.target);
+    fd.append('evidence_text', evidenceText);
+    fd.append('submitted_by', 'Dashboard User');
+    try {
+      const result = await apiForm(`/api/maps/${actualId}/submit-evidence`, fd);
+      setSubmitResult(result);
+    } catch (err) {
+      console.error(err);
+    }
+    setSubmitting(false);
+    setEvidenceText('');
+    refetch();
+  };
+
+  return (
+    <div className="animate-in">
+      {onBack && <button className="btn btn-outline mb-4" onClick={onBack} style={{fontSize:12}}>â† Back to MAP Board</button>}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
+        <div>
+          <h2 style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.4, marginBottom: 12 }}>{m.action_description}</h2>
+          <div className="flex gap-2 flex-wrap mb-4">
+            <Badge label={m.status} color={statusColor(m.status)} />
+            <Badge label={m.priority} color={priorityColor(m.priority)} />
+            {(m.attack_techniques||'').split(',').filter(Boolean).map(t => <span key={t} className="attack-tag">{t.trim()}</span>)}
+          </div>
+
+          <GlassCard className="mb-4" style={{ padding: 16 }}>
+            <div className="grid-3" style={{ gap: 16 }}>
+              {[{l:'Department',v:m.department},{l:'Source',v:reg.title?.slice(0,35)||'-'},{l:'Deadline',v:(m.deadline_date||'').slice(0,10)},
+                {l:'Days Remaining',v:dr.days!==null?`${dr.days}d`:'-',c:dr.color},{l:'Priority',v:m.priority,c:priorityColor(m.priority)},
+                {l:'Routing Reason',v:m.routing_reason||'-'}
+              ].map((c,i) => <div key={i}><div className="text-xs" style={{color:'var(--text-4)'}}>{c.l}</div><div className="text-sm font-bold mt-2" style={{color:c.c||'var(--text-1)'}}>{c.v}</div></div>)}
+            </div>
+          </GlassCard>
+
+          <GlassCard className="mb-4" style={{ padding: 16 }}>
+            <div className="text-xs" style={{color:'var(--text-4)'}}>Compliance Metric</div>
+            <div className="text-sm mt-2">{m.compliance_metric}</div>
+            <div className="text-xs mt-4" style={{color:'var(--text-4)'}}>Verification Method</div>
+            <div className="text-sm mt-2">{m.verification_method}</div>
+          </GlassCard>
+
+          {m.status !== 'conflict' && m.status !== 'completed' && (
+            <GlassCard className="mb-4" style={{ padding: 16 }}>
+              <div className="section-title">Submit Evidence</div>
+              <form onSubmit={submitEvidence}>
+                <textarea value={evidenceText} onChange={e => setEvidenceText(e.target.value)} required
+                  placeholder="Describe what has been done to comply with this requirement..."
+                  rows="4" style={{width:'100%',background:'rgba(255,255,255,0.04)',border:'1px solid var(--glass-border)',borderRadius:'var(--radius-sm)',padding:'10px 14px',color:'var(--text-1)',fontSize:13,resize:'vertical'}} />
+                
+                <div className="mt-2" style={{ background:'rgba(0,0,0,0.1)', padding:'8px 12px', borderRadius:'var(--radius-sm)', border:'1px dashed var(--glass-border)' }}>
+                  <div className="text-xs mb-1" style={{color:'var(--text-3)'}}>Attach Evidence Document (PDF/DOCX/Images)</div>
+                  <input type="file" name="evidence_file" className="input" style={{width:'100%', fontSize:12, padding:'4px 0'}} />
+                </div>
+                
+                <button type="submit" className="btn btn-primary mt-3" disabled={submitting} style={{display:'flex', alignItems:'center', gap:8}}>
+                  {submitting ? <><span className="spinner" style={{width:14,height:14}} />Running Validation Agent Pipeline...</> : 'Submit & Run Validation Pipeline'}
+                </button>
+              </form>
+              
+              {submitResult && (
+                <div className="mt-4 animate-in" style={{
+                  padding:16, borderRadius:'var(--radius-md)', 
+                  background: submitResult.verdict==='satisfied'?'rgba(16,185,129,0.05)':submitResult.verdict==='partial'?'rgba(245,158,11,0.05)':'rgba(239,68,68,0.05)',
+                  border:`1px solid ${submitResult.verdict==='satisfied'?'rgba(16,185,129,0.2)':submitResult.verdict==='partial'?'rgba(245,158,11,0.2)':'rgba(239,68,68,0.2)'}`
+                }}>
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="font-bold text-sm flex items-center gap-2">
+                      <span style={{ fontSize:18 }}>{submitResult.verdict==='satisfied'?'✅':submitResult.verdict==='partial'?'⚠️':'❌'}</span> 
+                      Pipeline Verdict: {submitResult.verdict.toUpperCase()}
+                    </div>
+                    <Badge label={`Confidence: ${submitResult.confidence}%`} color={submitResult.confidence > 75 ? 'var(--green)' : 'var(--amber)'} />
+                  </div>
+                  
+                  {submitResult.stages && (
+                    <div className="mb-3" style={{ background:'rgba(0,0,0,0.2)', padding:10, borderRadius:4, border:'1px solid rgba(255,255,255,0.05)' }}>
+                      <div className="text-xs font-bold mb-2" style={{color:'var(--text-3)'}}>PIPELINE STAGES EXECUTED:</div>
+                      {submitResult.stages.map((stg, i) => (
+                        <div key={i} className="text-xs mb-1 flex justify-between">
+                          <span style={{color:'var(--cyan)'}}>✓ Stage {i+1}: {stg.name}</span>
+                          <span style={{color:'var(--text-4)'}}>{stg.time}ms</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {submitResult.gap_analysis && (
+                    <div>
+                      <div className="text-xs font-bold mb-1" style={{color:'var(--text-3)'}}>LLM ANALYSIS:</div>
+                      <div className="text-xs" style={{color:'var(--text-2)', lineHeight:1.5, whiteSpace:'pre-wrap'}}>{submitResult.gap_analysis}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </GlassCard>
+          )}
+        </div>
+
+        <div>
+          <GlassCard className="mb-4" style={{ padding: 16 }}>
+            <div className="section-title">Evidence History ({evidence.length})</div>
+            {evidence.length > 0 ? evidence.map((ev, i) => (
+              <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--glass-border)' }}>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <Badge label={ev.validation_status || 'pending'} color={statusColor(ev.validation_status)} />
+                    {ev.validation_confidence && (
+                      <span className="text-xs px-2 py-0.5 rounded-full" style={{
+                        background: ev.validation_confidence === 'high' ? 'rgba(16,185,129,0.12)' : ev.validation_confidence === 'medium' ? 'rgba(245,158,11,0.12)' : 'rgba(239,68,68,0.12)',
+                        color: ev.validation_confidence === 'high' ? '#34d399' : ev.validation_confidence === 'medium' ? '#fbbf24' : '#f87171',
+                        border: '1px solid currentColor',
+                        fontSize: '10px',
+                        textTransform: 'capitalize'
+                      }}>
+                        {ev.validation_confidence} confidence
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs" style={{ color: 'var(--text-3)' }}>{timeAgo(ev.submitted_at)}</span>
+                </div>
+                <div className="text-xs mt-2 line-clamp-2">{ev.evidence_text}</div>
+                {ev.gap_analysis && <div className="text-xs mt-1" style={{color:'var(--amber)'}}>{ev.gap_analysis}</div>}
+              </div>
+            )) : <div className="text-xs" style={{color:'var(--text-3)',padding:10}}>No evidence submitted yet.</div>}
+          </GlassCard>
+
+          {siblings.length > 0 && (
+            <GlassCard style={{ padding: 16 }}>
+              <div className="section-title">Sibling MAPs ({siblings.length})</div>
+              {siblings.map(s => (
+                <div key={s.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--glass-border)', cursor: 'pointer' }} onClick={() => window.__selectedMapId = s.id}>
+                  <Badge label={s.department} color="var(--cyan)" />
+                  <Badge label={s.status} color={statusColor(s.status)} />
+                </div>
+              ))}
+            </GlassCard>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// CONFLICTS SCREEN
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function LegacyConflictsScreen() {
+  const { data: conflicts, loading, refetch } = usePolling('/api/conflicts', 30000);
+  const [resolving, setResolving] = useState(null);
+  const [error, setError] = useState('');
+
+  const resolveConflict = async (id) => {
+    setResolving(id);
+    setError('');
+    try {
+      const result = await api(`/api/conflicts/${id}/resolve`, { method: 'POST' });
+      if (!result || result.status !== 'resolved') {
+        setError('Type B conflicts must be assigned to Legal before they can be resolved.');
+        setResolving(null);
+        return;
+      }
+      setTimeout(() => { setResolving(null); refetch(); }, 1000);
+    } catch (err) {
+      setError(err.message || 'Conflict could not be resolved');
+      setResolving(null);
+    }
+  };
+
+  const assignLegal = async (id) => {
+    setError('');
+    const result = await api(`/api/conflicts/${id}/assign-legal`, { method: 'POST' });
+    if (!result) {
+      setError('Could not assign this conflict to Legal.');
+      return;
+    }
+    refetch();
+  };
+
+  const conflictLabel = (type) => {
+    if (type === 'A') return { label: 'Type A - Superseded', color: 'var(--text-3)', hint: ' Auto-resolved: Newer circular supersedes older MAP' };
+    if (type === 'B') return { label: 'Type B - Contradiction', color: 'var(--red)', hint: 'Review required Human Review Required: Both cannot be satisfied simultaneously' };
+    if (type === 'C') return { label: 'Type C - Overlap / Merged', color: 'var(--amber)', hint: ' Auto-resolved: MAPs merged into unified compliance action' };
+    return { label: type || 'Unknown', color: 'var(--text-3)', hint: '' };
+  };
+
+  return (
+    <div className="animate-in">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h1 className="page-title">Conflicts</h1>
+          <div className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>{(conflicts||[]).length} regulatory conflicts detected</div>
+        </div>
+      </div>
+
+      {loading && !conflicts ? <div className="flex items-center gap-2"><div className="spinner" /> Loading...</div> : (
+        <div>
+          {error && <div className="conflict-banner mb-4 text-sm">{error}</div>}
+          {/* Type B first - these require human review */}
+          {['B','A','C'].map(typeFilter => {
+            const filtered = (conflicts||[]).filter(c => (c.conflict_type||'B') === typeFilter);
+            if (!filtered.length) return null;
+            const meta = conflictLabel(typeFilter);
+            return (
+              <div key={typeFilter} className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <span style={{ fontSize: 13, fontWeight: 700, color: meta.color }}>{meta.label}</span>
+                  <span className="text-xs" style={{ color: 'var(--text-4)' }}>{meta.hint}</span>
+                  <Badge label={`${filtered.length}`} color={meta.color} />
+                </div>
+                {filtered.map(c => (
+                  <GlassCard key={c.id} className="mb-2" style={{
+                    padding: '16px 20px',
+                    borderColor: c.resolution === 'resolved' || c.resolution === 'merged' || c.resolution === 'auto_resolved'
+                      ? 'rgba(16,185,129,0.2)'
+                      : typeFilter === 'B' ? 'rgba(239,68,68,0.25)' : 'rgba(251,191,36,0.15)'
+                  }}>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex gap-2">
+                        <Badge label={meta.label} color={meta.color} />
+                        <Badge label={c.resolution || 'unresolved'} color={
+                          c.resolution === 'resolved' || c.resolution === 'merged' || c.resolution === 'auto_resolved'
+                            ? 'var(--green)' : c.resolution === 'pending_legal' ? 'var(--amber)' : 'var(--red)'
+                        } />
+                      </div>
+                      <span className="text-xs" style={{ color: 'var(--text-3)' }}>{timeAgo(c.detected_at || c.created_at)}</span>
+                    </div>
+                    <div className="text-sm font-bold">{c.description || 'Operational conflict detected between two MAPs'}</div>
+                    <div className="grid-2 mt-2" style={{ gap: 10 }}>
+                      <div style={{ padding: 10, background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-sm)' }}>
+                        <div className="text-xs" style={{ color: 'var(--text-4)' }}>MAP 1 - {c.map_1_dept}</div>
+                        <div className="text-xs mt-1 line-clamp-2">{c.map_1_action}</div>
+                      </div>
+                      <div style={{ padding: 10, background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-sm)' }}>
+                        <div className="text-xs" style={{ color: 'var(--text-4)' }}>MAP 2 - {c.map_2_dept}</div>
+                        <div className="text-xs mt-1 line-clamp-2">{c.map_2_action}</div>
+                      </div>
+                    </div>
+                    {/* Only Type B requires human intervention */}
+                    {typeFilter === 'B' && c.resolution !== 'resolved' && (
+                      <div className="flex gap-2 mt-4">
+                        {!c.legal_assigned_at && <span className="text-xs" style={{ color: 'var(--text-3)', alignSelf: 'center' }}>Assign to Legal before resolving</span>}
+                        <button className="btn btn-primary" style={{fontSize:12,padding:'6px 14px'}} onClick={() => resolveConflict(c.id)} disabled={resolving === c.id || !c.legal_assigned_at}>
+                          {resolving === c.id ? 'Resolving...' : ' Mark Resolved (Legal Team)'}
+                        </button>
+                        <button className="btn btn-outline" style={{fontSize:12,padding:'6px 14px'}} onClick={() => assignLegal(c.id)}>Assign to Legal</button>
+                      </div>
+                    )}
+                    {typeFilter !== 'B' && (
+                      <div className="text-xs mt-3" style={{ color: 'var(--green)', opacity: 0.8 }}>
+                         Automatically resolved by system
+                      </div>
+                    )}
+                  </GlassCard>
+                ))}
+              </div>
+            );
+          })}
+          {(!conflicts || conflicts.length === 0) && <div className="text-sm" style={{ color: 'var(--text-3)', textAlign: 'center', padding: 40 }}>No conflicts detected. ðŸŽ‰</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ConflictsScreen() {
+  const { data: conflicts, loading, refetch } = usePolling('/api/conflicts', 30000);
+  const [resolving, setResolving] = useState(null);
+  const [error, setError] = useState('');
+  const allConflicts = conflicts || [];
+  const typeB = allConflicts.filter(c => (c.conflict_type || 'B') === 'B');
+  const awaitingHuman = typeB.filter(c => c.resolution !== 'resolved' && !c.legal_assigned_at);
+  const legalReview = typeB.filter(c => c.resolution !== 'resolved' && c.legal_assigned_at);
+  const resolvedB = typeB.filter(c => c.resolution === 'resolved');
+  const autoResolved = allConflicts.filter(c => (c.conflict_type || 'B') !== 'B');
+
+  const assignLegal = async (id) => {
+    setError('');
+    const result = await api(`/api/conflicts/${id}/assign-legal`, { method: 'POST' });
+    if (!result) {
+      setError('Could not assign this conflict to Legal.');
+      return;
+    }
+    refetch();
+  };
+
+  const resolveConflict = async (id) => {
+    setResolving(id);
+    setError('');
+    const result = await api(`/api/conflicts/${id}/resolve`, { method: 'POST' });
+    if (!result || result.status !== 'resolved') {
+      setError('Type B conflicts must complete human/legal review before routing resumes.');
+      setResolving(null);
+      return;
+    }
+    setResolving(null);
+    refetch();
+  };
+
+  const sections = [
+    { key: 'human', title: 'Human Intervention Required', hint: 'Assign these Type B contradictions to Legal first.', rows: awaitingHuman, color: 'var(--red)' },
+    { key: 'legal', title: 'Legal Review In Progress', hint: 'Resolving from here sends both MAPs back to the router agent.', rows: legalReview, color: 'var(--amber)' },
+    { key: 'routed', title: 'Resolved And Routed', hint: 'Human review is complete and routing has resumed.', rows: resolvedB, color: 'var(--green)' },
+  ];
+
+  return (
+    <div className="animate-in">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h1 className="page-title">Conflicts</h1>
+          <div className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>Human review queue and system-handled regulatory conflicts</div>
+        </div>
+      </div>
+      {loading && !conflicts ? <div className="flex items-center gap-2"><div className="spinner" /> Loading...</div> : (
+        <div>
+          {error && <div className="conflict-banner mb-4 text-sm">{error}</div>}
+          <div className="metrics-row mb-4">
+            <GlassCard className="metric-card"><div className="metric-label">Needs Human Review</div><div className="metric-value" style={{ color: 'var(--red)' }}>{awaitingHuman.length}</div></GlassCard>
+            <GlassCard className="metric-card"><div className="metric-label">With Legal</div><div className="metric-value" style={{ color: 'var(--amber)' }}>{legalReview.length}</div></GlassCard>
+            <GlassCard className="metric-card"><div className="metric-label">Routed After Review</div><div className="metric-value" style={{ color: 'var(--green)' }}>{resolvedB.length}</div></GlassCard>
+            <GlassCard className="metric-card"><div className="metric-label">Auto Handled</div><div className="metric-value" style={{ color: 'var(--cyan)' }}>{autoResolved.length}</div></GlassCard>
+          </div>
+
+          {sections.map(section => section.rows.length ? (
+            <div key={section.key} className="mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span style={{ fontSize: 13, fontWeight: 800, color: section.color }}>{section.title}</span>
+                <span className="text-xs" style={{ color: 'var(--text-4)' }}>{section.hint}</span>
+                <Badge label={`${section.rows.length}`} color={section.color} />
+              </div>
+              {section.rows.map(c => (
+                <ConflictReviewCard key={c.id} conflict={c} resolving={resolving} onAssignLegal={assignLegal} onResolve={resolveConflict} />
+              ))}
+            </div>
+          ) : null)}
+
+          {autoResolved.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--cyan)' }}>System-Handled Conflicts</span>
+                <span className="text-xs" style={{ color: 'var(--text-4)' }}>Superseded and merged conflicts handled automatically.</span>
+                <Badge label={`${autoResolved.length}`} color="var(--cyan)" />
+              </div>
+              {autoResolved.map(c => (
+                <GlassCard key={c.id} className="mb-2" style={{ padding: '14px 18px', borderColor: 'rgba(6,182,212,0.14)' }}>
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex gap-2">
+                      <Badge label={`Type ${c.conflict_type}`} color={c.conflict_type === 'C' ? 'var(--amber)' : 'var(--text-3)'} />
+                      <Badge label={c.resolution || 'handled'} color="var(--green)" />
+                    </div>
+                    <span className="text-xs" style={{ color: 'var(--text-3)' }}>{timeAgo(c.resolved_at || c.created_at)}</span>
+                  </div>
+                  <div className="text-sm font-bold line-clamp-2">{c.description || 'Conflict handled by system logic'}</div>
+                </GlassCard>
+              ))}
+            </div>
+          )}
+          {allConflicts.length === 0 && <div className="text-sm" style={{ color: 'var(--text-3)', textAlign: 'center', padding: 40 }}>No conflicts detected.</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ConflictReviewCard({ conflict: c, resolving, onAssignLegal, onResolve }) {
+  const assigned = !!c.legal_assigned_at;
+  const resolved = c.resolution === 'resolved';
+  const stage = resolved ? 'Routed after review' : assigned ? 'Legal review assigned' : 'Awaiting human intervention';
+  const stageColor = resolved ? 'var(--green)' : assigned ? 'var(--amber)' : 'var(--red)';
+  return (
+    <GlassCard className="mb-2" style={{ padding: '16px 20px', borderColor: resolved ? 'rgba(16,185,129,0.2)' : assigned ? 'rgba(251,191,36,0.22)' : 'rgba(239,68,68,0.28)' }}>
+      <div className="flex justify-between items-center mb-2">
+        <div className="flex gap-2"><Badge label="Type B - Contradiction" color="var(--red)" /><Badge label={stage} color={stageColor} /></div>
+        <span className="text-xs" style={{ color: 'var(--text-3)' }}>{timeAgo(c.resolved_at || c.legal_assigned_at || c.created_at)}</span>
+      </div>
+      <div className="text-sm font-bold">{c.description || 'Operational conflict detected between two MAPs'}</div>
+      <div className="grid-2 mt-3" style={{ gap: 10 }}>
+        <div style={{ padding: 12, background: 'rgba(255,255,255,0.025)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--glass-border)' }}>
+          <div className="text-xs" style={{ color: 'var(--text-4)' }}>MAP 1 - {c.map_1_dept || 'Unassigned'}</div>
+          <div className="text-xs mt-1 line-clamp-3">{c.map_1_action}</div>
+        </div>
+        <div style={{ padding: 12, background: 'rgba(255,255,255,0.025)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--glass-border)' }}>
+          <div className="text-xs" style={{ color: 'var(--text-4)' }}>MAP 2 - {c.map_2_dept || 'Unassigned'}</div>
+          <div className="text-xs mt-1 line-clamp-3">{c.map_2_action}</div>
+        </div>
+      </div>
+      {!resolved && (
+        <div className="flex gap-2 mt-4 flex-wrap">
+          {!assigned && <button className="btn btn-primary" style={{fontSize:12,padding:'6px 14px'}} onClick={() => onAssignLegal(c.id)}>Assign to Legal</button>}
+          {assigned && <button className="btn btn-primary" style={{fontSize:12,padding:'6px 14px'}} onClick={() => onResolve(c.id)} disabled={resolving === c.id}>{resolving === c.id ? 'Routing...' : 'Resolve and Route MAPs'}</button>}
+          <span className="text-xs" style={{ color: 'var(--text-3)', alignSelf: 'center' }}>{assigned ? 'Router agent will choose department ownership after resolution.' : 'Human intervention is required before routing resumes.'}</span>
+        </div>
+      )}
+    </GlassCard>
+  );
+}
+
+const ATTACK_NAMES = {
+  "T1078": "Valid Accounts",
+  "T1190": "Exploit Public-Facing Application",
+  "T1059": "Command and Scripting Interpreter",
+  "T1027": "Obfuscated Files or Information",
+  "T1110": "Brute Force",
+  "T1566": "Phishing",
+  "T1053": "Scheduled Task/Job",
+  "T1204": "User Execution",
+  "T1005": "Data from Local System",
+  "T1041": "Exfiltration Over C2 Channel",
+  "T1048": "Exfiltration Over Alternative Protocol",
+  "T1083": "File and Directory Discovery",
+  "T1543": "Create or Modify System Process",
+  "T1082": "System Information Discovery",
+  "T1105": "Ingress Tool Transfer",
+  "T1112": "Modify Registry",
+  "T1130": "Install Root Certificate",
+  "T1133": "External Remote Services",
+  "T1135": "Network Share Discovery",
+  "T1140": "Deobfuscate/Decode Files or Information",
+  "T1201": "Password Policy Discovery",
+  "T1547": "Boot or Logon Autostart Execution"
+};
+
+function ThreatIntelScreen({ navigate }) {
+  const { data, loading } = useApi('/api/threat-intel');
+
+  const computed = useMemo(() => {
+    if (!data || !data.techniques) return { mappedCount: 0, avgCoverage: 0 };
+    const mappedMaps = new Set();
+    data.techniques.forEach(t => (t.maps || []).forEach(m => mappedMaps.add(m.id)));
+    
+    const avgCoverage = data.techniques.length 
+      ? Math.round((data.techniques.reduce((acc, t) => acc + (t.coverage || 0), 0) / data.techniques.length) * 100)
+      : 0;
+
+    return {
+      mappedCount: mappedMaps.size,
+      avgCoverage
+    };
+  }, [data]);
+
+  return (
+    <div className="animate-in">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h1 className="page-title">Threat Intelligence</h1>
+          <div className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>MITRE ATT&CK mapping for compliance actions</div>
+        </div>
+      </div>
+
+      {loading || !data ? <div className="flex items-center gap-2"><div className="spinner" /> Loading...</div> : (
+        <div>
+          <div className="metrics-row mb-4">
+            <GlassCard className="metric-card">
+              <div className="metric-label">Total MAPs Mapped</div>
+              <div className="metric-value" style={{ color: 'var(--cyan)' }}>{computed.mappedCount}</div>
+            </GlassCard>
+            <GlassCard className="metric-card">
+              <div className="metric-label">Unique Techniques</div>
+              <div className="metric-value" style={{ color: 'var(--purple)' }}>{data.total_techniques || 0}</div>
+            </GlassCard>
+            <GlassCard className="metric-card">
+              <div className="metric-label">Average Coverage</div>
+              <div className="metric-value" style={{ color: 'var(--green)' }}>{computed.avgCoverage}%</div>
+            </GlassCard>
+            <GlassCard className="metric-card">
+              <div className="metric-label">Unmitigated Techniques</div>
+              <div className="metric-value" style={{ color: 'var(--amber)' }}>{data.unmitigated_count || 0}</div>
+            </GlassCard>
+          </div>
+
+          {(data.techniques || []).map((t, i) => (
+            <GlassCard key={i} className="mb-2" style={{ padding: '14px 18px' }}>
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="attack-tag" style={{ marginRight: 8 }}>{t.technique_id}</span>
+                  <span className="font-bold text-sm">{ATTACK_NAMES[t.technique_id] || "Defensive Capability"}</span>
+                </div>
+                <Badge label={`${t.maps ? t.maps.length : 0} MAPs`} color="var(--cyan)" />
+              </div>
+            </GlassCard>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// AUDIT TRAIL SCREEN
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function LegacyAuditTrailScreen() {
+  const { data, loading, refetch } = usePolling('/api/audit/logs?limit=100', 30000);
+  const [agentFilter, setAgentFilter] = useState('all');
+
+  const filtered = useMemo(() => {
+    if (!data) return [];
+    if (agentFilter === 'all') return data;
+    return data.filter(l => l.agent === agentFilter);
+  }, [data, agentFilter]);
+
+  const agents = useMemo(() => {
+    if (!data) return ['all'];
+    return ['all', ...new Set(data.map(l => l.agent).filter(Boolean))];
+  }, [data]);
+
+  return (
+    <div className="animate-in">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h1 className="page-title">Audit Trail</h1>
+          <div className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>Tamper-proof log of all agent actions</div>
+        </div>
+      </div>
+
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {agents.map(a => (
+          <button key={a} className={`tb-tab ${agentFilter === a ? 'active' : ''}`}
+            style={{ fontSize: 11, padding: '5px 12px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--glass-border)', background: agentFilter === a ? 'rgba(6,182,212,0.1)' : 'transparent' }}
+            onClick={() => setAgentFilter(a)}>
+            {a === 'all' ? 'All Agents' : a}
+          </button>
+        ))}
+      </div>
+
+      {loading && !data ? <div className="flex items-center gap-2"><div className="spinner" /> Loading...</div> : (
+        <div>
+          {filtered.map((l, i) => (
+            <div key={i} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--glass-border)' }}>
+              <div style={{ width: 3, borderRadius: 2, background: agentColor(l.agent), flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="flex gap-2 items-center">
+                  <Badge label={l.agent} color={agentColor(l.agent)} />
+                  <span className="text-xs" style={{ color: 'var(--text-3)' }}>{timeAgo(l.timestamp)}</span>
+                </div>
+                <div className="text-sm font-bold mt-1">{l.action}</div>
+                {l.detail && <div className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--text-3)' }}>{typeof l.detail === 'string' ? l.detail : JSON.stringify(l.detail).slice(0, 150)}</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// RISK REPORT SCREEN
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function AuditTrailScreen() {
+  const { data, loading } = usePolling('/api/audit/logs?limit=150', 30000);
+  const [agentFilter, setAgentFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const logs = data || [];
+  const agents = useMemo(() => ['all', ...new Set(logs.map(l => l.agent).filter(Boolean))], [logs]);
+  const filtered = useMemo(() => logs.filter(l => {
+    const agentOk = agentFilter === 'all' || l.agent === agentFilter;
+    const haystack = `${l.agent || ''} ${l.action || ''} ${l.detail || ''}`.toLowerCase();
+    return agentOk && haystack.includes(search.toLowerCase());
+  }), [logs, agentFilter, search]);
+  const counts = useMemo(() => ({
+    total: logs.length,
+    router: logs.filter(l => l.agent === 'router').length,
+    conflict: logs.filter(l => l.agent === 'conflict_detector').length,
+    failed: logs.filter(l => String(l.action || '').toLowerCase().includes('fail')).length,
+  }), [logs]);
+  const formatDetail = (detail) => {
+    if (!detail) return 'No details captured';
+    try {
+      const parsed = typeof detail === 'string' ? JSON.parse(detail) : detail;
+      return Object.entries(parsed).slice(0, 4).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : String(v)}`).join(' | ');
+    } catch {
+      return String(detail);
+    }
+  };
+
+  return (
+    <div className="animate-in">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h1 className="page-title">Audit Trail</h1>
+          <div className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>Agent activity, routing decisions, and compliance evidence in chronological order</div>
+        </div>
+      </div>
+      <div className="metrics-row mb-4">
+        <GlassCard className="metric-card"><div className="metric-label">Recent Events</div><div className="metric-value" style={{ color: 'var(--cyan)' }}>{counts.total}</div></GlassCard>
+        <GlassCard className="metric-card"><div className="metric-label">Router Actions</div><div className="metric-value" style={{ color: 'var(--blue)' }}>{counts.router}</div></GlassCard>
+        <GlassCard className="metric-card"><div className="metric-label">Conflict Checks</div><div className="metric-value" style={{ color: 'var(--red)' }}>{counts.conflict}</div></GlassCard>
+        <GlassCard className="metric-card"><div className="metric-label">Failures</div><div className="metric-value" style={{ color: counts.failed ? 'var(--red)' : 'var(--green)' }}>{counts.failed}</div></GlassCard>
+      </div>
+      <GlassCard className="mb-4" style={{ padding: 14 }}>
+        <div className="flex gap-2 flex-wrap items-center">
+          <input placeholder="Search audit trail" value={search} onChange={e => setSearch(e.target.value)} style={{
+            maxWidth: 260,
+            width: '100%',
+            padding: '8px 12px',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--glass-border)',
+            background: 'rgba(255,255,255,0.04)',
+            color: 'var(--text-1)',
+            outline: 'none'
+          }} />
+          {agents.map(a => (
+            <button key={a} className={`tb-tab ${agentFilter === a ? 'active' : ''}`}
+              style={{ fontSize: 11, padding: '6px 12px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--glass-border)', background: agentFilter === a ? 'rgba(6,182,212,0.12)' : 'transparent' }}
+              onClick={() => setAgentFilter(a)}>
+              {a === 'all' ? 'All Agents' : a.replace('_', ' ')}
+            </button>
+          ))}
+        </div>
+      </GlassCard>
+      {loading && !data ? <div className="flex items-center gap-2"><div className="spinner" /> Loading...</div> : (
+        <div>
+          {filtered.map((l, i) => (
+            <GlassCard key={l.id || i} className="mb-2" style={{ padding: '12px 16px', borderLeft: `3px solid ${agentColor(l.agent)}` }}>
+              <div className="flex justify-between items-start gap-3">
+                <div style={{ minWidth: 0 }}>
+                  <div className="flex gap-2 items-center mb-1">
+                    <Badge label={(l.agent || 'agent').replace('_', ' ')} color={agentColor(l.agent)} />
+                    <span className="text-xs" style={{ color: 'var(--text-3)' }}>{timeAgo(l.timestamp)}</span>
+                  </div>
+                  <div className="text-sm font-bold">{l.action || 'Agent event'}</div>
+                  <div className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--text-3)' }}>{formatDetail(l.detail)}</div>
+                </div>
+                {(l.map_id || l.regulation_id) && (
+                  <div className="text-xs" style={{ color: 'var(--text-4)', textAlign: 'right', minWidth: 150 }}>
+                    {l.map_id && <div>MAP {String(l.map_id).slice(0, 8)}</div>}
+                    {l.regulation_id && <div>REG {String(l.regulation_id).slice(0, 8)}</div>}
+                  </div>
+                )}
+              </div>
+            </GlassCard>
+          ))}
+          {filtered.length === 0 && <div className="text-sm" style={{ color: 'var(--text-3)', textAlign: 'center', padding: 40 }}>No audit events match the current filters.</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RiskReportScreen() {
+  const { data } = useApi('/api/risk-report');
+  if (!data) return <div className="spinner mt-4" />;
+  const score = data.global_score || 0;
+  const fin = data.financial_exposure || {};
+  const bd = data.breakdown || {};
+  const departments = data.departments || {};
+
+  const rows = [
+    { label: 'High Priority Overdue', count: bd.overdue_high || 0, mult: 12, positive: true },
+    { label: 'Medium Priority Overdue', count: bd.overdue_medium || 0, mult: 6, positive: true },
+    { label: 'Low Priority Overdue', count: bd.overdue_low || 0, mult: 3, positive: true },
+    { label: 'Unresolved Conflicts', count: bd.conflicts_unresolved || 0, mult: 8, positive: true },
+    { label: 'Pending High Priority', count: bd.pending_high || 0, mult: 3, positive: true },
+    { label: 'Completed This Month', count: bd.completed_this_month || 0, mult: -2, positive: false }
+  ];
+
+  return (
+    <div className="animate-in">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="page-title">Executive Risk Report</h1>
+          <div className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>Real-time compliance exposure and risk scoring</div>
+        </div>
+      </div>
+      <div className="grid-3 mb-4">
+        <GlassCard style={{ textAlign:'center', borderColor: score>=60?'rgba(239,68,68,0.2)':'transparent', boxShadow: score>=60?'var(--glow-red)':'none' }}>
+          <div className="metric-label">Overall Risk Score</div>
+          <div className="metric-value" style={{ color: riskColor(score), fontSize: 48 }}>{score}</div>
+          <div className="metric-desc">out of 100</div>
+        </GlassCard>
+        <GlassCard style={{ textAlign:'center' }}>
+          <div className="metric-label">Penalty Exposure</div>
+          <div style={{ fontSize:24, fontWeight:900, color:'var(--amber)', margin:'10px 0' }}>INR {fin.min_cr||0}Cr - INR {fin.max_cr||0}Cr</div>
+          <div className="metric-desc">{fin.overdue_count||0} overdue MAPs contributing</div>
+        </GlassCard>
+        <GlassCard style={{ textAlign:'center' }}>
+          <div className="metric-label">Closed This Month</div>
+          <div className="metric-value" style={{ color:'var(--green)' }}>{bd.completed_this_month||0}</div>
+          <div className="metric-desc">Score reduced by {(bd.completed_this_month||0)*2} points</div>
+        </GlassCard>
+      </div>
+
+      <GlassCard className="mb-4">
+        <div className="section-title">How this score is calculated</div>
+        {rows.map((r,i) => {
+          const pts = r.count * r.mult;
+          const bg = r.positive && r.count > 0 ? 'rgba(239,68,68,0.05)' : !r.positive && r.count > 0 ? 'rgba(16,185,129,0.05)' : 'transparent';
+          const ptColor = pts > 0 ? 'var(--red)' : pts < 0 ? 'var(--green)' : 'var(--text-4)';
+          return <div key={i} className="flex items-center justify-between" style={{ background:bg, borderRadius:'var(--radius-sm)', padding:'10px 14px', margin:'2px 0' }}>
+            <span className="text-sm">{r.label}</span>
+            <div className="flex gap-4 items-center"><span className="text-sm" style={{color:'var(--text-3)'}}>{r.count} Ã-{r.mult}</span>
+              <span className="font-bold" style={{color:ptColor,width:50,textAlign:'right'}}>{pts>0?'+':''}{pts}</span></div>
+          </div>;
+        })}
+        <div className="flex items-center justify-between" style={{ borderTop:'2px solid var(--glass-border)', paddingTop:10, marginTop:4 }}>
+          <span className="font-bold text-lg">Total (clamped 0-100)</span>
+          <span style={{ fontSize:22, fontWeight:900, color:riskColor(score) }}>{score}</span>
+        </div>
+      </GlassCard>
+
+      <div className="section-title">Risk by Department</div>
+      <div className="grid-3 mb-4">
+        {['IT','Compliance','Legal','HR','Risk','Operations'].map(name => {
+          const d = departments[name] || {};
+          return <GlassCard key={name} style={{ textAlign:'center' }}>
+            <div className="text-sm font-bold mb-2">{name}</div>
+            <div style={{fontSize:28,fontWeight:900,color:riskColor(d.score||0)}}>{d.score||0}</div>
+            <div style={{margin:'10px auto',height:6,background:'rgba(255,255,255,0.04)',borderRadius:3,overflow:'hidden'}}>
+              <div style={{height:'100%',width:`${Math.min(d.score||0,100)}%`,background:riskColor(d.score||0),borderRadius:3,transition:'width 0.8s'}}/>
+            </div>
+            <div className="flex justify-between text-xs" style={{color:'var(--text-4)',gap:8,justifyContent:'center'}}>
+              <span style={{color:'var(--red)'}}>Overdue {d.overdue||0}</span>
+              <span style={{color:'var(--blue)'}}>Active {d.in_progress||0}</span>
+              <span style={{color:'var(--green)'}}>Done {d.completed||0}</span>
+            </div>
+          </GlassCard>;
+        })}
+      </div>
+
+      <div className="section-title">Estimated Regulatory Exposure</div>
+      <div className="grid-2">
+        <GlassCard style={{textAlign:'center'}}><div className="text-xs" style={{color:'var(--text-4)'}}>Minimum Exposure</div><div style={{fontSize:24,fontWeight:900,color:'var(--amber)',margin:'8px 0'}}>INR {fin.min_cr||0} Crores</div></GlassCard>
+        <GlassCard style={{textAlign:'center'}}><div className="text-xs" style={{color:'var(--text-4)'}}>Maximum Exposure</div><div style={{fontSize:24,fontWeight:900,color:'var(--red)',margin:'8px 0'}}>INR {fin.max_cr||0} Crores</div></GlassCard>
+      </div>
+      <div className="text-xs mt-2" style={{color:'var(--text-4)',textAlign:'center'}}>Based on RBI (INR 2Cr-INR 50Cr), SEBI (INR 1Cr-INR 25Cr), and IRDAI (INR 50L-INR 5Cr) penalty ranges per overdue MAP.</div>
+    </div>
+  );
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// APP - Router + Layout
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function App() {
+  const [page, setPage] = useState('dashboard');
+  const { data: dashboard } = usePolling('/api/dashboard', 15000);
+  const counts = { newRegs: dashboard?.new_circulars || 0, conflicts: dashboard?.conflicts || 0 };
+
+  const navigate = (p) => setPage(p);
+
+  const screens = {
+    dashboard: <DashboardScreen dashboard={dashboard} navigate={navigate} />,
+    inbox: <InboxScreen navigate={navigate} />,
+    maps: <MapBoardScreen navigate={navigate} />,
+    map_detail: <MapDetailScreen navigate={navigate} />,
+    conflicts: <ConflictsScreen />,
+    threat: <ThreatIntelScreen navigate={navigate} />,
+    audit: <AuditTrailScreen />,
+    risk: <RiskReportScreen />,
+  };
+
+  const exportCSV = async () => {
+    const maps = await api('/api/maps?limit=1000');
+    if (!maps || !maps.length) { alert('No MAP data to export.'); return; }
+    const headers = ['ID','Department','Action','Status','Priority','Deadline','Metric','Verification'];
+    const rows = maps.map(m => [
+      m.id,
+      m.department || '',
+      `"${(m.action_description||'').replace(/"/g,'""')}"`,
+      m.status || '',
+      m.priority || '',
+      (m.deadline_date||'').slice(0,10),
+      `"${(m.compliance_metric||'').replace(/"/g,'""')}"`,
+      `"${(m.verification_method||'').replace(/"/g,'""')}"`
+    ]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `mapmantra_maps_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  };
+
+  const downloadReport = async () => {
+    const [risk, maps, conflicts] = await Promise.all([
+      api('/api/risk-report'),
+      api('/api/maps?limit=1000'),
+      api('/api/conflicts'),
+    ]);
+    const now = new Date().toISOString().slice(0,10);
+    const total = maps ? maps.length : 0;
+    const byStatus = {};
+    (maps||[]).forEach(m => { byStatus[m.status] = (byStatus[m.status]||0)+1; });
+    const byDept = {};
+    (maps||[]).forEach(m => { byDept[m.department] = (byDept[m.department]||0)+1; });
+    const lines = [
+      `MAPMANTRA - COMPLIANCE STATUS REPORT`,
+      `Generated: ${now}`,
+      `${'='.repeat(60)}`,
+      ``,
+      `EXECUTIVE SUMMARY`,
+      `-`.repeat(40),
+      `Overall Risk Score : ${risk?.global_score || 'N/A'} / 100`,
+      `Total MAPs         : ${total}`,
+      `Completed          : ${byStatus['completed']||0}`,
+      `In Progress        : ${byStatus['in_progress']||0}`,
+      `Overdue            : ${byStatus['overdue']||0}`,
+      `Partial            : ${byStatus['partial']||0}`,
+      `Conflicts (Open)   : ${(conflicts||[]).filter(c=>c.resolution==='pending_legal').length}`,
+      ``,
+      `STATUS BREAKDOWN BY DEPARTMENT`,
+      `-`.repeat(40),
+      ...Object.entries(byDept).map(([d,c]) => `  ${d.padEnd(20)} ${c} MAPs`),
+      ``,
+      `FINANCIAL EXPOSURE`,
+      `-`.repeat(40),
+      `Minimum: INR ${risk?.financial_exposure?.min_cr||0} Crores`,
+      `Maximum: INR ${risk?.financial_exposure?.max_cr||0} Crores`,
+      ``,
+      `${'='.repeat(60)}`,
+      `This report was auto-generated by MapMantra AI Compliance System.`,
+    ];
+    const blob = new Blob([lines.join('\n')], {type:'text/plain;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `mapmantra_compliance_report_${now}.txt`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="app-layout">
+      <Sidebar page={page} navigate={navigate} counts={counts} />
+      <Topbar page={page} navigate={navigate} dashboard={dashboard} onExportCSV={exportCSV} onDownloadReport={downloadReport} />
+      <main className="main-area">
+        {screens[page] || screens.dashboard}
+      </main>
+    </div>
+  );
+}
+
+// â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+<script>
+// Authentication check
+async function checkAuth() {
+    let userId = localStorage.getItem('user_id');
+    let username = localStorage.getItem('username');
+    let dept = localStorage.getItem('department');
+
+    if (!userId) {
+        localStorage.setItem('user_id', 'user_1');
+        localStorage.setItem('username', 'Compliance Officer');
+        localStorage.setItem('department', 'Compliance');
+        userId = 'user_1';
+        username = 'Compliance Officer';
+        dept = 'Compliance';
+    }
+
+    const userProfileDiv = document.getElementById('user-profile-display');
+    if (userProfileDiv) {
+        userProfileDiv.innerHTML = `<div style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+            <div style="background:var(--cyan); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#000;">
+                ${username.charAt(0).toUpperCase()}
+            </div>
+            <div>
+                <div style="font-weight:600; font-size:13px;">${username}</div>
+                <div style="font-size:11px; color:var(--text-2);">${dept}</div>
+            </div>
+        </div>`;
+    }
+}
+document.addEventListener('DOMContentLoaded', checkAuth);
+</script>
+
+</body>
+</html>
+
+

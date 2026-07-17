@@ -1,0 +1,41 @@
+# Core Framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+
+# LLM & Embeddings (Local Ollama)
+langchain>=0.3.0
+langchain-ollama>=0.2.0
+langchain-community>=0.3.0
+
+# LangGraph Orchestration
+langgraph>=0.2.0
+
+# Vector Store
+chromadb>=0.5.0
+
+# PDF Processing
+pdfplumber>=0.11.0
+
+# Web Scraping & Feeds
+requests>=2.32.0
+beautifulsoup4>=4.12.0
+feedparser>=6.0.0
+
+# Browser Automation (Fallback)
+playwright>=1.45.0
+
+# Email Ingestion (Fallback)
+imaplib2>=3.6
+
+# Scheduling
+apscheduler>=3.10.0
+
+# Data Validation
+pydantic>=2.7.0
+
+# Utilities
+python-dotenv>=1.0.0
+
+# Streamlit (Frontend - future)
+streamlit>=1.37.0

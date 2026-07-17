@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+data.db
+data/
+*.pdf
+*.png
+*.txt
+!requirements.txt
+!README.md
+scratch_*.py
+.env
