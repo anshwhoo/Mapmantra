@@ -16,6 +16,7 @@ chromadb>=0.5.0
 
 # PDF Processing
 pdfplumber>=0.11.0
+python-docx>=1.1.0
 
 # Web Scraping & Feeds
 requests>=2.32.0

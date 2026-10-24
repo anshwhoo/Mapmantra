@@ -275,7 +275,8 @@ async def submit_evidence(
 
             # Handle file upload
             evidence_file = form_data.get("evidence_file")
-            if evidence_file and hasattr(evidence_file, 'read'):
+            # Browsers send an empty file part when no file is chosen; skip it
+            if evidence_file and hasattr(evidence_file, 'read') and getattr(evidence_file, 'filename', ''):
                 try:
                     import uuid as _uuid
                     evidence_dir = Path("./data/evidence")

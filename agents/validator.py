@@ -109,8 +109,8 @@ def _extract_image_text(file_path: str) -> str:
         return (
             f"[Image evidence uploaded: {Path(file_path).name}, "
             f"dimensions: {w}x{h}px, format: {img.format}. "
-            f"Image appears to contain documentary evidence. "
-            f"Manual visual verification recommended.]"
+            f"Its text could not be read automatically (no OCR), so its contents are unverified. "
+            f"Manual visual verification required.]"
         )
     except ImportError:
         return f"[Image file uploaded: {Path(file_path).name}]"
@@ -263,22 +263,39 @@ def cross_match_compliance(evidence_text: str, map_row: dict) -> dict:
 
 # ── Stage 4: Temporal Validation ───────────────────────────────────
 
+_MONTHS = {m: i for i, m in enumerate(
+    ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], start=1)}
+_MONTH_NAME = r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?"
+
+
+def _find_evidence_dates(text: str) -> list[str]:
+    """Return ISO dates (YYYY-MM-DD) for every full date written in the evidence:
+    2026-10-21, 21/10/2026, 21 October 2026, October 21, 2026."""
+    found = []
+
+    def add(y, m, d):
+        try:
+            found.append(datetime(int(y), int(m), int(d)).strftime("%Y-%m-%d"))
+        except ValueError:
+            pass
+
+    for y, m, d in re.findall(r"\b(\d{4})-(\d{2})-(\d{2})\b", text):
+        add(y, m, d)
+    for d, m, y in re.findall(r"\b(\d{1,2})[/-](\d{1,2})[/-](\d{4})\b", text):
+        add(y, m, d)
+    for d, mon, y in re.findall(rf"\b(\d{{1,2}})(?:st|nd|rd|th)?\s+{_MONTH_NAME}\s*,?\s+(\d{{4}})\b", text, re.IGNORECASE):
+        add(y, _MONTHS[mon[:3].lower()], d)
+    for mon, d, y in re.findall(rf"\b{_MONTH_NAME}\s+(\d{{1,2}})(?:st|nd|rd|th)?,?\s+(\d{{4}})\b", text, re.IGNORECASE):
+        add(y, _MONTHS[mon[:3].lower()], d)
+    return list(dict.fromkeys(found))
+
+
 def validate_temporal(evidence_text: str, map_row: dict) -> dict:
     """Verify dates in evidence are consistent with regulation timeline."""
     deadline_str = map_row.get("deadline_date", "")
     created_str = map_row.get("created_at", "")
 
-    # Parse all dates found in evidence
-    date_pattern = re.compile(r'\d{4}-\d{2}-\d{2}')
-    evidence_dates = date_pattern.findall(evidence_text)
-
-    # Also try DD/MM/YYYY and MM/DD/YYYY patterns
-    alt_dates = re.findall(r'(\d{1,2})[/-](\d{1,2})[/-](\d{4})', evidence_text)
-    for d, m, y in alt_dates:
-        try:
-            evidence_dates.append(f"{y}-{m.zfill(2)}-{d.zfill(2)}")
-        except Exception:
-            pass
+    evidence_dates = _find_evidence_dates(evidence_text)
 
     result = {
         "dates_found_in_evidence": evidence_dates,
@@ -299,22 +316,43 @@ def validate_temporal(evidence_text: str, map_row: dict) -> dict:
 
     for date_str in evidence_dates:
         try:
-            ev_date = datetime.fromisoformat(date_str)
+            ev_date = datetime.fromisoformat(date_str).date()
             # Check if evidence date is in the future (suspicious)
-            if ev_date > datetime.now():
+            if ev_date > datetime.now().date():
                 result["temporal_issues"].append(
                     f"Date {date_str} is in the future - evidence may describe planned actions"
                 )
                 result["temporal_ok"] = False
+                result["future_dates"] = True
 
-            # Check if action was done after regulation was issued
-            if created and ev_date < created.replace(tzinfo=None):
+            # Check if action was done after regulation was issued (same day is fine)
+            if created and ev_date < created.date():
                 result["temporal_issues"].append(
                     f"Date {date_str} is before the regulation was issued ({created_str[:10]}) - suspicious"
                 )
                 result["temporal_ok"] = False
+                result["predates_requirement"] = True
         except Exception:
             pass
+
+    # Timeliness against the deadline is computed here, not left to the LLM:
+    # models misjudge which of two dates is earlier
+    try:
+        deadline = datetime.fromisoformat(deadline_str.replace("Z", "+00:00")).date() if deadline_str else None
+    except Exception:
+        deadline = None
+    if deadline:
+        today = datetime.now().date()
+        past_dates = [d for d in evidence_dates if datetime.fromisoformat(d).date() <= today]
+        if past_dates:
+            late = [d for d in past_dates if datetime.fromisoformat(d).date() > deadline]
+            result["late_dates"] = late
+            result["within_deadline"] = not late
+            if late:
+                result["temporal_issues"].append(
+                    f"Date(s) {', '.join(late)} are after the deadline {deadline.isoformat()} - completed late"
+                )
+                result["temporal_ok"] = False
 
     return result
 
@@ -528,6 +566,84 @@ def _parse_validation_response(raw: str) -> dict:
     return {}
 
 
+# ── Verdict reconciliation ─────────────────────────────────────────
+
+LOW_RELEVANCE_PCT = 20
+CRITERIA_NAMES = [
+    "criterion_1_action_completion", "criterion_2_subreq_coverage", "criterion_3_timeliness",
+    "criterion_4_evidence_specificity", "criterion_5_document_authenticity",
+    "criterion_6_metric_alignment", "criterion_7_verification_match", "criterion_8_completeness",
+]
+_SCORE_RANK = {"fail": 0, "partial": 1, "pass": 2}
+
+
+def _normalize_score(value) -> str:
+    """Map the model's score wording onto pass/partial/fail; anything unrecognised needs review (partial)."""
+    v = str(value).strip().lower()
+    if v in ("pass", "passed", "met", "yes", "satisfied", "true"):
+        return "pass"
+    if v in ("fail", "failed", "not met", "no", "false", "none", "low"):
+        return "fail"
+    return "partial"
+
+
+def _normalize_criteria(result: dict) -> tuple[dict, bool]:
+    """Read criterion scores under the key spellings models use (criterion_1, criterion1, c1, C1).
+    Returns the scores and whether the model scored any criterion at all."""
+    scores, found = {}, False
+    for i, name in enumerate(CRITERIA_NAMES, start=1):
+        raw = next((result[k] for k in (f"criterion_{i}", f"criterion{i}", f"c{i}", f"C{i}") if k in result), None)
+        if raw is None:
+            scores[name] = "fail"
+        else:
+            scores[name] = _normalize_score(raw)
+            found = True
+    return scores, found
+
+
+def _normalize_verdict(verdict) -> str:
+    v = str(verdict).strip().lower()
+    return v if v in ("satisfied", "partial", "failed") else "failed"
+
+
+def _apply_rule_checks(scores: dict, red_flags: list, temporal: dict) -> list[str]:
+    """Deterministic limits on the model's scores from the automated pre-analysis.
+    Lowers scores in place and returns a note for each limit applied."""
+    flags = {f["flag"] for f in red_flags}
+    notes = []
+
+    def cap(name, level, why):
+        if _SCORE_RANK[scores[name]] > _SCORE_RANK[level]:
+            scores[name] = level
+            notes.append(why)
+
+    if "FUTURE_TENSE_LANGUAGE" in flags and "NO_COMPLETION_INDICATORS" in flags:
+        cap("criterion_1_action_completion", "fail", "describes planned work with no sign it was completed")
+    if "LOW_RELEVANCE" in flags:
+        cap("criterion_6_metric_alignment", "fail", "does not address the compliance metric")
+    # Timeliness is decided from the evidence dates when there are any
+    if temporal.get("within_deadline") is False:
+        cap("criterion_3_timeliness", "fail", "completed after the deadline")
+    elif temporal.get("predates_requirement"):
+        cap("criterion_3_timeliness", "partial", "dated before the requirement was created; needs manual review")
+    elif temporal.get("within_deadline") and scores["criterion_3_timeliness"] != "pass":
+        scores["criterion_3_timeliness"] = "pass"
+        notes.append("evidence dates are on or before the deadline")
+    if "EVIDENCE_TOO_SHORT" in flags:
+        cap("criterion_8_completeness", "fail", "too short to be complete")
+    return notes
+
+
+def _verdict_from_scores(scores: dict) -> str:
+    """Verdict rules from the prompt: any fail = failed, any partial = partial, all pass = satisfied."""
+    values = set(scores.values())
+    if "fail" in values:
+        return "failed"
+    if "partial" in values:
+        return "partial"
+    return "satisfied"
+
+
 # ── Main Validation Entry Point ────────────────────────────────────
 
 def validate_evidence(
@@ -607,6 +723,13 @@ def validate_evidence(
 
     # ── Stage 5: Red Flag Detection ────────────────────────────
     red_flags = detect_red_flags(combined_evidence, map_row)
+    if cross_match["overall_relevance"] < LOW_RELEVANCE_PCT:
+        red_flags.append({
+            "flag": "LOW_RELEVANCE",
+            "severity": "high",
+            "detail": f"Evidence barely matches the requirement ({cross_match['overall_relevance']}% relevance) "
+                      f"and may be about a different control.",
+        })
     if red_flags:
         logger.warning(
             "Red flags for MAP %s: %s",
@@ -639,7 +762,7 @@ def validate_evidence(
         f"Department: {map_row.get('department', 'N/A')}\n"
         f"Compliance Metric: {map_row['compliance_metric']}\n"
         f"Verification Method: {map_row['verification_method']}\n"
-        f"Deadline: {map_row['deadline_date']}\n"
+        f"Deadline: {(map_row['deadline_date'] or 'N/A')[:10]}\n"
         f"Priority: {map_row.get('priority', 'N/A')}\n"
         f"Source Regulation: {regulation['title'] if regulation else 'N/A'}\n\n"
         f"=== EVIDENCE SUBMITTED ===\n"
@@ -677,16 +800,17 @@ def validate_evidence(
         )
         confidence = ["low", "medium", "high"][final_confidence]
 
-        criteria_scores = {
-            "criterion_1_action_completion": result.get("criterion_1", "fail"),
-            "criterion_2_subreq_coverage": result.get("criterion_2", "fail"),
-            "criterion_3_timeliness": result.get("criterion_3", "fail"),
-            "criterion_4_evidence_specificity": result.get("criterion_4", "fail"),
-            "criterion_5_document_authenticity": result.get("criterion_5", "fail"),
-            "criterion_6_metric_alignment": result.get("criterion_6", "fail"),
-            "criterion_7_verification_match": result.get("criterion_7", "fail"),
-            "criterion_8_completeness": result.get("criterion_8", "fail"),
-        }
+        criteria_scores, llm_scored = _normalize_criteria(result)
+        rule_notes = _apply_rule_checks(criteria_scores, red_flags, temporal)
+        # The verdict follows the stated rules from the scores rather than trusting
+        # the model's own verdict field, which can contradict its scores
+        if llm_scored:
+            verdict = _verdict_from_scores(criteria_scores)
+        else:
+            logger.error("No criterion scores in validation response for MAP %s; using rule-based verdict", map_id)
+            verdict = _normalize_verdict(_rule_based_fallback(pre_analysis)["verdict"])
+        if rule_notes:
+            gap_analysis += " [Rule checks: " + "; ".join(rule_notes) + "]"
 
         # Override verdict if red flags are severe
         high_severity_flags = [f for f in red_flags if f["severity"] == "high"]
@@ -858,6 +982,11 @@ def _build_pre_analysis_summary(pre_analysis: dict, map_row: dict) -> str:
 
     # Temporal
     temporal = pre_analysis.get("temporal", {})
+    deadline = (temporal.get("deadline") or "")[:10]
+    if temporal.get("within_deadline"):
+        lines.append(f"\nTIMELINESS (computed): evidence dates are ON OR BEFORE the deadline {deadline}")
+    elif temporal.get("within_deadline") is False:
+        lines.append(f"\nTIMELINESS (computed): evidence dates are AFTER the deadline {deadline}")
     if temporal.get("temporal_issues"):
         lines.append(f"\nTEMPORAL ISSUES:")
         for issue in temporal["temporal_issues"]:
