@@ -511,6 +511,55 @@ function Topbar({ page, navigate, dashboard, onExportCSV, onDownloadReport }) {
 
 
 // ════════════════════════════════════════════════════════════════════
+// PIPELINE AGENTS PANEL — live state of every concurrent worker
+// ════════════════════════════════════════════════════════════════════
+const PIPELINE_WORKERS = [
+  { key: 'ingestion', label: 'Ingestion', agent: 'ingestion' },
+  { key: 'extractor', label: 'Extractor', agent: 'extractor', queue: 'regulations_new' },
+  { key: 'router', label: 'Router', agent: 'router', queue: 'maps_pending_routing' },
+  { key: 'conflict', label: 'Conflict Detector', agent: 'conflict_detector', queue: 'maps_pending_conflict_check' },
+  { key: 'threat', label: 'Threat Mapper', agent: 'threat_mapper', queue: 'maps_pending_threat_mapping' },
+  { key: 'finalizer', label: 'Finalizer', agent: 'supervisor', queue: 'regulations_processing' },
+  { key: 'supervisor', label: 'Supervisor', agent: 'risk_engine' },
+];
+function PipelineAgentsPanel() {
+  const { data } = usePolling('/api/pipeline/status', 3000);
+  const workers = data?.workers || {};
+  const queues = data?.queues || {};
+  const busyCount = Object.values(workers).filter(w => w.state === 'busy').length;
+  return (
+    <GlassCard style={{ padding: 20 }} className="mb-4">
+      <div className="flex justify-between items-center" style={{ marginBottom: 12 }}>
+        <div className="section-title" style={{ marginBottom: 0 }}>Pipeline Agents</div>
+        <span className="text-xs" style={{ color: 'var(--text-3)' }}>
+          {data ? `${busyCount} of ${PIPELINE_WORKERS.length} agents working now · live` : 'connecting...'}
+        </span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
+        {PIPELINE_WORKERS.map(p => {
+          const w = workers[p.key] || {};
+          const busy = w.state === 'busy';
+          const color = w.last_error ? 'var(--red)' : busy ? agentColor(p.agent) : 'var(--text-4)';
+          return (
+            <div key={p.key} style={{ padding: 12, borderRadius: 'var(--radius-md)', border: `1px solid ${busy ? color : 'var(--glass-border)'}`, background: busy ? `${color}12` : 'transparent', transition: 'all 0.3s ease' }}>
+              <div className="flex items-center gap-2" style={{ marginBottom: 6 }}>
+                {busy ? <span className="spinner" style={{ width: 10, height: 10 }} /> : <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, display: 'inline-block' }} />}
+                <span className="text-sm font-bold truncate">{p.label}</span>
+              </div>
+              <div className="text-xs" style={{ color, fontWeight: 700, textTransform: 'uppercase' }}>{w.last_error ? 'error' : (w.state || '...')}</div>
+              <div className="text-xs" style={{ color: 'var(--text-3)', marginTop: 4 }}>{w.items_processed || 0} handled</div>
+              {p.queue && <div className="text-xs" style={{ color: 'var(--text-3)' }}>{queues[p.queue] ?? 0} waiting</div>}
+              {w.last_error && <div className="text-xs truncate" style={{ color: 'var(--red)', marginTop: 4 }} title={w.last_error}>{w.last_error}</div>}
+            </div>
+          );
+        })}
+      </div>
+    </GlassCard>
+  );
+}
+
+
+// ════════════════════════════════════════════════════════════════════
 // DASHBOARD SCREEN
 // ════════════════════════════════════════════════════════════════════
 function DashboardScreen({ dashboard, navigate }) {
@@ -551,6 +600,8 @@ function DashboardScreen({ dashboard, navigate }) {
           </GlassCard>
         ))}
       </div>
+
+      <PipelineAgentsPanel />
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
         {/* Department breakdown */}

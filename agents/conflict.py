@@ -9,7 +9,8 @@ import logging
 import re
 from pathlib import Path
 
-from langchain_ollama import ChatOllama, OllamaEmbeddings
+from langchain_ollama import OllamaEmbeddings
+from agents.llm import chat_llm, embeddings as ollama_embeddings
 from langchain_core.messages import SystemMessage, HumanMessage
 
 import db
@@ -44,7 +45,7 @@ def _get_chroma_collection():
     import chromadb
 
     client = chromadb.PersistentClient(path=CHROMA_DIR)
-    embeddings = OllamaEmbeddings(model="nomic-embed-text")
+    embeddings = ollama_embeddings()
 
     # We use chromadb's native collection with a custom embedding function wrapper
     collection = client.get_or_create_collection(
@@ -118,7 +119,7 @@ def run_conflict_detector(map_ids: list = None) -> dict:
         return {"checked": 0, "conflicts_found": 0}
 
     collection, embeddings = _get_chroma_collection()
-    llm = ChatOllama(model="qwen3:8b", temperature=0.1, timeout=120)
+    llm = chat_llm()
 
     checked = 0
     conflicts_found = 0
@@ -160,6 +161,13 @@ def run_conflict_detector(map_ids: list = None) -> dict:
                     if existing_regulation_id == map_row["regulation_id"]:
                         continue
 
+                    # Skip index entries whose MAP has since been archived or disputed,
+                    # otherwise the same old MAP gets merged again and again
+                    existing = db.fetch_one("SELECT status FROM maps WHERE id = ?", (existing_map_id,))
+                    if not existing or existing["status"] in ("superseded", "conflict"):
+                        collection.delete(ids=[existing_map_id])
+                        continue
+
                     # Ask LLM to classify the conflict
                     compare_text = (
                         f"MAP A (existing): {doc}\n\n"
@@ -179,9 +187,10 @@ def run_conflict_detector(map_ids: list = None) -> dict:
                         # MAP B supersedes MAP A — archive old MAP
                         db.execute(
                             "UPDATE maps SET status = 'superseded', conflict_flag = 1, "
-                            "conflict_type = 'A', conflict_detail = ? WHERE id = ?",
-                            (explanation, existing_map_id),
+                            "conflict_type = 'A', conflict_detail = ? WHERE id = ? OR parent_map_id = ?",
+                            (explanation, existing_map_id, existing_map_id),
                         )
+                        collection.delete(ids=[existing_map_id])
                         db.insert_audit_entry(
                             agent="conflict_detector",
                             action="MAP superseded",
@@ -301,17 +310,14 @@ def run_conflict_detector(map_ids: list = None) -> dict:
                                     now,
                                 ),
                             )
-                            # Archive both originals
-                            db.execute(
-                                "UPDATE maps SET status = 'superseded', conflict_flag = 1, "
-                                "conflict_type = 'C' WHERE id = ?",
-                                (existing_map_id,),
-                            )
-                            db.execute(
-                                "UPDATE maps SET status = 'superseded', conflict_flag = 1, "
-                                "conflict_type = 'C' WHERE id = ?",
-                                (map_id,),
-                            )
+                            # Archive both originals together with their department siblings
+                            for archived_id in (existing_map_id, map_id):
+                                db.execute(
+                                    "UPDATE maps SET status = 'superseded', conflict_flag = 1, "
+                                    "conflict_type = 'C' WHERE id = ? OR parent_map_id = ?",
+                                    (archived_id, archived_id),
+                                )
+                            collection.delete(ids=[existing_map_id])
 
                             # Record in conflicts table
                             conflict_id = db.new_id()
@@ -337,6 +343,10 @@ def run_conflict_detector(map_ids: list = None) -> dict:
                         conflicts_found += 1
 
                     # else: "none" — no conflict, unrelated
+
+                    current = db.fetch_one("SELECT status FROM maps WHERE id = ?", (map_id,))
+                    if current and current["status"] in ("superseded", "conflict"):
+                        break
 
             # Add new MAP to ChromaDB for future searches (if not superseded/conflicted)
             current_status = db.fetch_one("SELECT status FROM maps WHERE id = ?", (map_id,))

@@ -20,7 +20,7 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
-from langchain_ollama import ChatOllama
+from agents.llm import chat_llm
 from langchain_core.messages import SystemMessage, HumanMessage
 
 import db
@@ -652,7 +652,7 @@ def validate_evidence(
     )
 
     try:
-        llm = ChatOllama(model="qwen3:8b", temperature=0.1, timeout=180)
+        llm = chat_llm()
         response = llm.invoke([
             SystemMessage(content=SYSTEM_PROMPT),
             HumanMessage(content=user_prompt),

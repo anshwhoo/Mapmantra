@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from pydantic import BaseModel, field_validator
-from langchain_ollama import ChatOllama
+from agents.llm import chat_llm
 from langchain_core.messages import SystemMessage, HumanMessage
 
 import db
@@ -131,7 +131,7 @@ def run_extractor(regulation_ids: list = None, batch_size: int = 5) -> dict:
         return {"processed": 0, "maps_created": 0, "skipped": 0}
 
     # 120-second timeout prevents Ollama from hanging indefinitely
-    llm = ChatOllama(model="qwen3:8b", temperature=0.1, timeout=120)
+    llm = chat_llm()
 
     total_maps = 0
     processed_count = 0
