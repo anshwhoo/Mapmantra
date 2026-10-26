@@ -16,7 +16,6 @@ import db
 from agents.ingestion import ingest_manual_upload
 from agents.validator import validate_evidence
 from agents.risk_score import compute_risk_scores
-from agents.router import run_router
 from agents import workers
 
 load_dotenv()
@@ -190,22 +189,24 @@ def list_maps(
     status: str = Query(None),
     search: str = Query(None),
 ):
-    """List MAPs with optional filters."""
-    query = "SELECT * FROM maps WHERE 1=1"
+    """List MAPs with optional filters, including the source regulation's title and regulator."""
+    query = """SELECT m.*, r.title AS regulation_title, r.source AS regulation_source
+               FROM maps m LEFT JOIN regulations r ON r.id = m.regulation_id
+               WHERE 1=1"""
     params = []
     if department:
-        query += " AND department = ?"
+        query += " AND m.department = ?"
         params.append(department)
     if priority:
-        query += " AND priority = ?"
+        query += " AND m.priority = ?"
         params.append(priority)
     if status:
-        query += " AND status = ?"
+        query += " AND m.status = ?"
         params.append(status)
     if search:
-        query += " AND action_description LIKE ?"
+        query += " AND m.action_description LIKE ?"
         params.append(f"%{search}%")
-    query += " ORDER BY created_at DESC"
+    query += " ORDER BY m.created_at DESC"
     return db.fetch_all(query, tuple(params))
 
 
@@ -239,11 +240,20 @@ def get_map_detail(map_id: str):
             (map_row["regulation_id"],),
         )
 
+    # Latest contradiction involving this MAP (so the page can explain why it is on hold)
+    conflict = db.fetch_one(
+        """SELECT * FROM conflicts
+           WHERE conflict_type = 'B' AND (map_id_1 = ? OR map_id_2 = ?)
+           ORDER BY created_at DESC LIMIT 1""",
+        (map_id, map_id),
+    )
+
     return {
         "map": map_row,
         "evidence_history": evidence,
         "siblings": siblings,
         "regulation": regulation,
+        "conflict": conflict,
     }
 
 
@@ -330,11 +340,21 @@ def list_conflicts(resolution: str = Query(None)):
         SELECT c.*,
                m1.action_description as map_1_action,
                m1.department as map_1_dept,
+               m1.status as map_1_status,
+               m1.deadline_date as map_1_deadline,
+               r1.title as map_1_regulation,
+               r1.source as map_1_source,
                m2.action_description as map_2_action,
-               m2.department as map_2_dept
+               m2.department as map_2_dept,
+               m2.status as map_2_status,
+               m2.deadline_date as map_2_deadline,
+               r2.title as map_2_regulation,
+               r2.source as map_2_source
         FROM conflicts c
         JOIN maps m1 ON c.map_id_1 = m1.id
         JOIN maps m2 ON c.map_id_2 = m2.id
+        LEFT JOIN regulations r1 ON r1.id = m1.regulation_id
+        LEFT JOIN regulations r2 ON r2.id = m2.regulation_id
         WHERE 1=1
     """
     params = []
@@ -389,6 +409,15 @@ def resolve_conflict(conflict_id: str):
     affected_map_ids = [conflict["map_id_1"], conflict["map_id_2"]]
     if conflict["conflict_type"] == "B":
         for mid in affected_map_ids:
+            # The router re-assigns departments after legal review, so the department
+            # copies made before the conflict are archived instead of duplicated
+            db.execute(
+                """UPDATE maps
+                   SET status = 'superseded',
+                       conflict_detail = 'Department copy replaced when the action was re-routed after legal review'
+                   WHERE parent_map_id = ? AND status = 'conflict'""",
+                (mid,),
+            )
             db.execute(
                 """UPDATE maps
                    SET status = 'pending',
@@ -398,7 +427,10 @@ def resolve_conflict(conflict_id: str):
                    WHERE id = ?""",
                 (mid,),
             )
-        router_summary = run_router(map_ids=affected_map_ids)
+        # The router worker picks the actions up; routing here as well could
+        # race with it and create duplicate department copies
+        workers.wake("router")
+        router_summary = "queued"
     else:
         router_summary = None
         for mid in affected_map_ids:

@@ -13,12 +13,17 @@ Usage:
 
 Demo flow: open http://localhost:8001, upload demo/sample_circular.pdf from the
 Regulation Inbox and watch the Pipeline Agents panel on the Dashboard.
+Then upload demo/conflict_circular.pdf (SEBI): its offshore-replication rule
+contradicts the sample's data-localisation rule, so the Conflict Detector raises
+a Type B conflict that needs human/legal review. Evidence files to submit are
+generated in demo/evidence_files/ with today's date.
 """
 
 import os
 import shutil
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -37,8 +42,55 @@ SAMPLE_CIRCULAR = [
     "   (CCMP) within 60 days and review it at least annually thereafter.",
     "4. Banks shall conduct disaster recovery (DR) drills for critical systems every",
     "   quarter and document the results, including RTO and RPO achieved.",
+    "5. Banks shall ensure that all customer payment data is stored only in systems",
+    "   located in India. No copy of such data shall be stored or processed outside India.",
     "Chief General Manager-in-Charge",
 ]
+
+# Contradicts item 5 above: triggers a Type B conflict (human/legal review)
+CONFLICT_CIRCULAR = [
+    "SECURITIES AND EXCHANGE BOARD OF INDIA - SAMPLE CIRCULAR (MapMantra demo)",
+    "SEBI/HO/DEMO/CIR/2026/77",
+    "To: All Regulated Entities",
+    "Subject: Business Continuity - Offshore Disaster Recovery for Customer Data",
+    "1. Regulated entities shall replicate all customer payment and transaction data in",
+    "   real time to a disaster recovery site located outside India, in a different",
+    "   geographic region from the primary data centre.",
+    "Chief General Manager",
+]
+
+
+def _evidence_files(today: date) -> dict[str, list[str]]:
+    """Evidence documents dated today, so they post-date the actions they support."""
+    d = today.strftime("%d %B %Y")
+    nxt = today.replace(year=today.year + 1).strftime("%B %Y")
+    return {
+        "ccmp_board_approval.pdf": [
+            "BOARD RESOLUTION No. BR/2026/142 - Cyber Crisis Management Plan",
+            f"Date of meeting: {d}",
+            "RESOLVED that the updated Cyber Crisis Management Plan (CCMP v3.0, ref CCMP/2026/03)",
+            "is approved. The CCMP has been approved by the Board of Directors and circulated",
+            f"to all departments on {d}.",
+            "Annual review: the Board has fixed an annual review of the CCMP;",
+            f"the next review is due in {nxt}.",
+            "Certified extract of Board minutes and the signed CCMP document are enclosed.",
+            f"Approved by Ramesh Iyer, Chairman. Certified by Company Secretary on {d}.",
+        ],
+        "ccmp_draft_note.pdf": [
+            "Internal note - Cyber Crisis Management Plan",
+            "We are preparing the updated CCMP. The draft is planned to be presented to the",
+            "Board next quarter. Work in progress.",
+        ],
+        "data_localisation_report.pdf": [
+            f"DATA LOCALISATION COMPLIANCE REPORT DL/2026/07 - {d}",
+            "All customer payment data has been verified to be stored only in the Mumbai",
+            "(primary) and Chennai (disaster recovery) data centres, both located in India.",
+            "No copy of customer payment data is stored or processed outside India.",
+            f"Internal Audit Report IA/2026/19 dated {d} confirms the above after a",
+            "review of storage locations, backup targets and replication jobs.",
+            f"Signed: Chief Information Security Officer, {d}.",
+        ],
+    }
 
 
 def _make_pdf(lines: list[str]) -> bytes:
@@ -75,13 +127,20 @@ def main():
         subprocess.run([sys.executable, str(ROOT / "seed.py")], cwd=DEMO, check=True,
                        env={**os.environ, "PYTHONPATH": str(ROOT)})
     (DEMO / "sample_circular.pdf").write_bytes(_make_pdf(SAMPLE_CIRCULAR))
+    (DEMO / "conflict_circular.pdf").write_bytes(_make_pdf(CONFLICT_CIRCULAR))
+    evidence_dir = DEMO / "evidence_files"
+    evidence_dir.mkdir(exist_ok=True)
+    for name, lines in _evidence_files(date.today()).items():
+        (evidence_dir / name).write_bytes(_make_pdf(lines))
 
     os.environ.setdefault("OLLAMA_MODEL", "qwen2.5:7b")
     os.environ.setdefault("INGESTION_ON_STARTUP", "false")
     os.chdir(DEMO)
     sys.path.insert(0, str(ROOT))
     print(f"Demo running at http://localhost:8001 (model {os.environ['OLLAMA_MODEL']})")
-    print(f"Upload {DEMO / 'sample_circular.pdf'} from the Regulation Inbox to watch the agents.")
+    print(f"Upload {DEMO / 'sample_circular.pdf'} from the Regulation Inbox to watch the agents,")
+    print(f"then {DEMO / 'conflict_circular.pdf'} to trigger a Type B conflict.")
+    print(f"Evidence files to submit: {evidence_dir}")
 
     import uvicorn
     uvicorn.run("main:app", host="127.0.0.1", port=8001)

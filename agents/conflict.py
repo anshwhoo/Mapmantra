@@ -204,17 +204,15 @@ def run_conflict_detector(map_ids: list = None) -> dict:
                         conflicts_found += 1
 
                     elif conflict_type == "B":
-                        # Direct contradiction — flag both
-                        db.execute(
-                            "UPDATE maps SET status = 'conflict', conflict_flag = 1, "
-                            "conflict_type = 'B', conflict_detail = ? WHERE id = ?",
-                            (explanation, map_id),
-                        )
-                        db.execute(
-                            "UPDATE maps SET status = 'conflict', conflict_flag = 1, "
-                            "conflict_type = 'B', conflict_detail = ? WHERE id = ?",
-                            (explanation, existing_map_id),
-                        )
+                        # Direct contradiction — hold both MAPs and their department siblings
+                        # (completed copies keep their status)
+                        for held_id in (map_id, existing_map_id):
+                            db.execute(
+                                "UPDATE maps SET status = 'conflict', conflict_flag = 1, "
+                                "conflict_type = 'B', conflict_detail = ? "
+                                "WHERE (id = ? OR parent_map_id = ?) AND status != 'completed'",
+                                (explanation, held_id, held_id),
+                            )
                         # Write to conflicts table
                         conflict_id = db.new_id()
                         db.execute(
