@@ -8,7 +8,7 @@ import json
 import logging
 import re
 
-from langchain_ollama import ChatOllama
+from agents.llm import chat_llm
 from langchain_core.messages import SystemMessage, HumanMessage
 
 import db
@@ -100,7 +100,7 @@ def run_router(map_ids: list = None) -> dict:
         logger.info("No pending MAPs to route")
         return {"routed": 0, "siblings_created": 0}
 
-    llm = ChatOllama(model="qwen3:8b", temperature=0.1, timeout=120)
+    llm = chat_llm()
     routed = 0
     siblings_created = 0
     fallback_routed = 0

@@ -313,6 +313,62 @@ body {
 .btn { border-radius: 7px; }
 .tb-tab, .sb-title { letter-spacing: 0; }
 .sb-subtitle { color: var(--text-2); }
+
+.mt-1 { margin-top: 4px; } .mt-3 { margin-top: 12px; }
+.mb-1 { margin-bottom: 4px; } .mb-3 { margin-bottom: 12px; } .mb-6 { margin-bottom: 24px; }
+
+/* ── MAP Board / Conflicts (employee-readable layout) ── */
+.chip { font-size: 12px; padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--glass-border); background: transparent; color: var(--text-2); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-family: var(--font); }
+.chip:hover { border-color: var(--glass-border-hover); color: var(--text-1); }
+.chip.active { border-color: var(--glass-border-active); background: rgba(6,182,212,0.1); color: var(--text-1); }
+.chip-count { font-size: 11px; font-weight: 700; padding: 0 6px; border-radius: var(--radius-pill); background: rgba(148,163,184,0.15); color: var(--text-1); }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.summary-tile { text-align: left; padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--glass-border); background: var(--glass-bg); cursor: pointer; font-family: var(--font); color: var(--text-1); }
+.summary-tile:hover { border-color: var(--glass-border-hover); }
+.board-search { margin-left: auto; min-width: 220px; max-width: 320px; flex: 1; font-size: 13px; }
+.action-row { display: flex; gap: 14px; align-items: stretch; padding: 14px 16px; margin-bottom: 8px; border: 1px solid var(--glass-border); border-radius: var(--radius-md); background: var(--glass-bg); cursor: pointer; transition: border-color .2s var(--ease), background .2s var(--ease); }
+.action-row:hover { border-color: var(--glass-border-hover); background: var(--glass-bg-strong); }
+.action-accent { width: 3px; border-radius: 2px; flex-shrink: 0; }
+.action-title { font-size: 14px; font-weight: 700; line-height: 1.45; margin: 8px 0 4px; color: var(--text-1); }
+.action-next { align-self: center; font-size: 12px; font-weight: 700; white-space: nowrap; color: var(--cyan); }
+.state-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: var(--radius-pill); }
+.detail-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 20px; }
+.status-banner { padding: 14px 16px; border-left: 3px solid; border-radius: var(--radius-sm); background: var(--glass-bg-strong); }
+.facts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.fact { padding: 12px 14px; border: 1px solid var(--glass-border); border-radius: var(--radius-md); background: var(--glass-bg); }
+.tips { margin: 0; padding-left: 18px; color: var(--text-2); line-height: 1.6; }
+.evidence-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text-1); font-size: 13px; font-family: var(--font); resize: vertical; }
+.file-drop { display: flex; flex-direction: column; padding: 10px 12px; border: 1px dashed var(--glass-border-hover); border-radius: var(--radius-sm); }
+.result-box { padding: 16px; border: 1px solid; border-radius: var(--radius-md); }
+.criteria-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 6px 14px; }
+.criteria-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-1); }
+.criteria-icon { width: 18px; height: 18px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid; border-radius: 50%; font-size: 11px; font-weight: 800; }
+.family-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 9px 10px; border-radius: var(--radius-sm); cursor: pointer; }
+.family-row:hover { background: rgba(255,255,255,0.04); }
+.family-row.current { cursor: default; background: rgba(6,182,212,0.08); }
+.history-item { padding: 10px 0; border-bottom: 1px solid var(--glass-border); }
+.history-item > summary { display: flex; justify-content: space-between; align-items: center; gap: 8px; cursor: pointer; list-style: none; }
+.history-item > summary::-webkit-details-marker { display: none; }
+.step-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.step-tab { text-align: left; padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--glass-border); background: var(--glass-bg); cursor: pointer; color: var(--text-1); font-family: var(--font); }
+.step-tab:hover { border-color: var(--glass-border-hover); }
+.step-tab.active { background: var(--glass-bg-strong); }
+.timeline { display: flex; gap: 8px; flex-wrap: wrap; }
+.timeline-step { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 140px; color: var(--text-2); }
+.timeline-step.done { color: var(--text-1); }
+.timeline-dot { width: 22px; height: 22px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 11px; font-weight: 800; border: 1px solid var(--glass-border-hover); }
+.timeline-step.done .timeline-dot { background: var(--green); border-color: var(--green); color: #04130d; }
+.rule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.rule-panel { padding: 14px; border: 1px solid var(--glass-border); border-radius: var(--radius-md); background: rgba(255,255,255,0.025); }
+.link-btn { background: none; border: none; padding: 0; color: var(--cyan); font-size: 12px; font-weight: 700; cursor: pointer; font-family: var(--font); }
+.next-step { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--glass-bg-strong); border: 1px solid var(--glass-border); }
+.next-step > div:first-child { flex: 1; min-width: 220px; }
+@media (max-width: 900px) {
+  .detail-grid { grid-template-columns: 1fr; }
+  .action-row { flex-wrap: wrap; }
+  .action-next { width: 100%; padding-left: 17px; }
+  .board-search { margin-left: 0; max-width: none; }
+}
 </style>
 </head>
 <body>
@@ -511,6 +567,55 @@ function Topbar({ page, navigate, dashboard, onExportCSV, onDownloadReport }) {
 
 
 // ════════════════════════════════════════════════════════════════════
+// PIPELINE AGENTS PANEL — live state of every concurrent worker
+// ════════════════════════════════════════════════════════════════════
+const PIPELINE_WORKERS = [
+  { key: 'ingestion', label: 'Ingestion', agent: 'ingestion' },
+  { key: 'extractor', label: 'Extractor', agent: 'extractor', queue: 'regulations_new' },
+  { key: 'router', label: 'Router', agent: 'router', queue: 'maps_pending_routing' },
+  { key: 'conflict', label: 'Conflict Detector', agent: 'conflict_detector', queue: 'maps_pending_conflict_check' },
+  { key: 'threat', label: 'Threat Mapper', agent: 'threat_mapper', queue: 'maps_pending_threat_mapping' },
+  { key: 'finalizer', label: 'Finalizer', agent: 'supervisor', queue: 'regulations_processing' },
+  { key: 'supervisor', label: 'Supervisor', agent: 'risk_engine' },
+];
+function PipelineAgentsPanel() {
+  const { data } = usePolling('/api/pipeline/status', 3000);
+  const workers = data?.workers || {};
+  const queues = data?.queues || {};
+  const busyCount = Object.values(workers).filter(w => w.state === 'busy').length;
+  return (
+    <GlassCard style={{ padding: 20 }} className="mb-4">
+      <div className="flex justify-between items-center" style={{ marginBottom: 12 }}>
+        <div className="section-title" style={{ marginBottom: 0 }}>Pipeline Agents</div>
+        <span className="text-xs" style={{ color: 'var(--text-3)' }}>
+          {data ? `${busyCount} of ${PIPELINE_WORKERS.length} agents working now · live` : 'connecting...'}
+        </span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
+        {PIPELINE_WORKERS.map(p => {
+          const w = workers[p.key] || {};
+          const busy = w.state === 'busy';
+          const color = w.last_error ? 'var(--red)' : busy ? agentColor(p.agent) : 'var(--text-4)';
+          return (
+            <div key={p.key} style={{ padding: 12, borderRadius: 'var(--radius-md)', border: `1px solid ${busy ? color : 'var(--glass-border)'}`, background: busy ? `${color}12` : 'transparent', transition: 'all 0.3s ease' }}>
+              <div className="flex items-center gap-2" style={{ marginBottom: 6 }}>
+                {busy ? <span className="spinner" style={{ width: 10, height: 10 }} /> : <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, display: 'inline-block' }} />}
+                <span className="text-sm font-bold truncate">{p.label}</span>
+              </div>
+              <div className="text-xs" style={{ color, fontWeight: 700, textTransform: 'uppercase' }}>{w.last_error ? 'error' : (w.state || '...')}</div>
+              <div className="text-xs" style={{ color: 'var(--text-3)', marginTop: 4 }}>{w.items_processed || 0} handled</div>
+              {p.queue && <div className="text-xs" style={{ color: 'var(--text-3)' }}>{queues[p.queue] ?? 0} waiting</div>}
+              {w.last_error && <div className="text-xs truncate" style={{ color: 'var(--red)', marginTop: 4 }} title={w.last_error}>{w.last_error}</div>}
+            </div>
+          );
+        })}
+      </div>
+    </GlassCard>
+  );
+}
+
+
+// ════════════════════════════════════════════════════════════════════
 // DASHBOARD SCREEN
 // ════════════════════════════════════════════════════════════════════
 function DashboardScreen({ dashboard, navigate }) {
@@ -551,6 +656,8 @@ function DashboardScreen({ dashboard, navigate }) {
           </GlassCard>
         ))}
       </div>
+
+      <PipelineAgentsPanel />
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
         {/* Department breakdown */}
@@ -791,262 +898,452 @@ function InboxScreen({ navigate }) {
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // MAP BOARD SCREEN
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-function MapBoardScreen({ navigate }) {
-  const { data: maps, loading, refetch } = usePolling('/api/maps?limit=500', 15000);
-  const [filter, setFilter] = useState('all');
-  const [deptFilter, setDeptFilter] = useState('all');
-  const [selectedMap, setSelectedMap] = useState(null);
+// ── Plain-language status for employees ──────────────────────────────────
+const DOT = ' · ';
+const fmtDate = iso => {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  return isNaN(d) ? '-' : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+const ACTIONABLE = ['in_progress', 'assigned', 'partial', 'overdue'];
 
-  const filtered = useMemo(() => {
-    if (!maps) return [];
-    let f = maps;
-    if (filter !== 'all') f = f.filter(m => m.status === filter);
-    if (deptFilter !== 'all') f = f.filter(m => m.department === deptFilter);
+function actionState(m) {
+  const days = daysRemaining(m.deadline_date).days;
+  switch (m.status) {
+    case 'completed':
+      return { group: 'completed', label: 'Completed', tone: 'var(--green)', next: 'View evidence', rank: 8 };
+    case 'superseded':
+      return { group: 'archived', label: m.conflict_type === 'C' ? 'Merged into another action' : m.conflict_type === 'A' ? 'Replaced by a newer rule' : 'Archived',
+               tone: 'var(--text-3)', next: 'View', rank: 10 };
+    case 'conflict':
+      return { group: 'hold', label: 'On hold: conflicts with another regulation', tone: 'var(--red)', next: 'See conflict', rank: 3 };
+    case 'pending':
+      return { group: 'waiting', label: 'Being assigned to a department', tone: 'var(--text-2)', next: 'View', rank: 9 };
+    case 'partial':
+      return { group: 'action', label: 'Evidence incomplete', tone: 'var(--amber)', next: 'Add missing evidence', rank: 1 };
+    default: {
+      if (days !== null && days < 0)
+        return { group: 'action', label: `Overdue by ${plural(-days, 'day')}`, tone: 'var(--red)', next: 'Submit evidence', rank: 0 };
+      const soon = days !== null && days <= 7;
+      return { group: 'action', label: days === null ? 'Evidence needed' : days === 0 ? 'Due today' : `Due in ${plural(days, 'day')}`,
+               tone: soon ? 'var(--amber)' : 'var(--blue)', next: 'Submit evidence', rank: soon ? 1 : 2 };
+    }
+  }
+}
+const isOverdue = m => m.status === 'overdue' || (ACTIONABLE.includes(m.status) && (daysRemaining(m.deadline_date).days ?? 1) < 0);
+
+function StatePill({ state }) {
+  return (
+    <span className="state-pill" style={{ color: state.tone, background: `color-mix(in srgb, ${state.tone} 14%, transparent)`, border: `1px solid color-mix(in srgb, ${state.tone} 35%, transparent)` }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: state.tone }} />{state.label}
+    </span>
+  );
+}
+
+const loadDept = () => { try { return localStorage.getItem('mapmantra.dept') || 'all'; } catch { return 'all'; } };
+const saveDept = d => { try { localStorage.setItem('mapmantra.dept', d); } catch {} };
+
+// ════════════════════════════════════════════════════════════════════
+// MAP BOARD — compliance actions, grouped by what the employee must do
+// ════════════════════════════════════════════════════════════════════
+const BOARD_TABS = [
+  { key: 'action', label: 'Needs action', test: m => ACTIONABLE.includes(m.status) },
+  { key: 'overdue', label: 'Overdue', test: isOverdue },
+  { key: 'partial', label: 'Evidence incomplete', test: m => m.status === 'partial' },
+  { key: 'hold', label: 'On hold (conflict)', test: m => m.status === 'conflict' },
+  { key: 'waiting', label: 'Being assigned', test: m => m.status === 'pending' },
+  { key: 'completed', label: 'Completed', test: m => m.status === 'completed' },
+  { key: 'archived', label: 'Archived', test: m => m.status === 'superseded' },
+  { key: 'all', label: 'All', test: () => true },
+];
+
+function MapBoardScreen({ navigate, initialMapId }) {
+  const { data: maps, loading } = usePolling('/api/maps?limit=500', 15000);
+  const [tab, setTab] = useState('action');
+  const [dept, setDept] = useState(loadDept);
+  const [search, setSearch] = useState('');
+  const [selectedMap, setSelectedMap] = useState(initialMapId || null);
+  useEffect(() => { if (initialMapId) setSelectedMap(initialMapId); }, [initialMapId]);
+
+  const all = maps || [];
+  const departments = useMemo(() => [...new Set(all.map(m => m.department).filter(Boolean))].sort(), [all]);
+  const families = useMemo(() => {
+    const f = {};
+    all.filter(m => m.status !== 'superseded').forEach(m => {
+      const k = m.parent_map_id || m.id;
+      (f[k] = f[k] || []).push(m.department);
+    });
     return f;
-  }, [maps, filter, deptFilter]);
+  }, [all]);
 
-  const statuses = ['all', 'pending', 'in_progress', 'completed', 'partial', 'overdue', 'conflict'];
-  const departments = useMemo(() => {
-    if (!maps) return [];
-    return ['all', ...new Set(maps.map(m => m.department).filter(Boolean))];
-  }, [maps]);
-
-  const counts = useMemo(() => {
-    if (!maps) return {};
+  const inDept = useMemo(() => all.filter(m => dept === 'all' || m.department === dept), [all, dept]);
+  const counts = useMemo(() => Object.fromEntries(BOARD_TABS.map(t => [t.key, inDept.filter(t.test).length])), [inDept]);
+  const deptActionCounts = useMemo(() => {
     const c = {};
-    maps.forEach(m => { c[m.status] = (c[m.status] || 0) + 1; });
-    c.all = maps.length;
+    all.filter(m => ACTIONABLE.includes(m.status)).forEach(m => { c[m.department] = (c[m.department] || 0) + 1; });
     return c;
-  }, [maps]);
+  }, [all]);
+  const dueSoon = useMemo(() => inDept.filter(m => ACTIONABLE.includes(m.status) && m.status !== 'overdue' && (() => {
+    const d = daysRemaining(m.deadline_date).days; return d !== null && d >= 0 && d <= 7; })()).length, [inDept]);
+
+  const rows = useMemo(() => {
+    const t = BOARD_TABS.find(x => x.key === tab) || BOARD_TABS[0];
+    const q = search.trim().toLowerCase();
+    return inDept
+      .filter(t.test)
+      .filter(m => !q || (m.action_description || '').toLowerCase().includes(q) || (m.regulation_title || '').toLowerCase().includes(q))
+      .map(m => ({ m, s: actionState(m), d: daysRemaining(m.deadline_date).days }))
+      .sort((a, b) => a.s.rank - b.s.rank || (a.d ?? 9999) - (b.d ?? 9999));
+  }, [inDept, tab, search]);
 
   if (selectedMap) {
-    return <MapDetailScreen mapId={selectedMap} navigate={navigate} onBack={() => setSelectedMap(null)} />;
+    return <MapDetailScreen mapId={selectedMap} navigate={navigate} onBack={() => setSelectedMap(null)} onOpenMap={setSelectedMap} />;
   }
+
+  const pickDept = d => { setDept(d); saveDept(d); };
+  const summary = [
+    { key: 'overdue', label: 'Overdue', value: counts.overdue, color: 'var(--red)' },
+    { key: 'action', label: 'Due within 7 days', value: dueSoon, color: 'var(--amber)' },
+    { key: 'partial', label: 'Evidence incomplete', value: counts.partial, color: 'var(--amber)' },
+    { key: 'hold', label: 'On hold (conflict)', value: counts.hold, color: 'var(--red)' },
+    { key: 'completed', label: 'Completed', value: counts.completed, color: 'var(--green)' },
+  ];
 
   return (
     <div className="animate-in">
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h1 className="page-title">MAP Board</h1>
-          <div className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>{maps ? maps.length : 0} total compliance actions</div>
+      <div className="mb-4">
+        <h1 className="page-title">MAP Board</h1>
+        <div className="text-sm mt-1" style={{ color: 'var(--text-2)' }}>
+          Compliance actions your department must complete. Open an action to see what proof is needed and submit evidence.
         </div>
       </div>
 
+      <div className="text-xs mb-2" style={{ color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.04em' }}>YOUR DEPARTMENT</div>
       <div className="flex gap-2 mb-4 flex-wrap">
-        {statuses.map(s => (
-          <button key={s} className={`tb-tab ${filter === s ? 'active' : ''}`}
-            style={{ fontSize: 12, padding: '6px 14px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--glass-border)', background: filter === s ? 'rgba(6,182,212,0.1)' : 'transparent' }}
-            onClick={() => setFilter(s)}>
-            {s === 'all' ? 'All' : s.replace(/_/g, ' ')} {counts[s] ? `(${counts[s]})` : ''}
+        {['all', ...departments].map(d => (
+          <button key={d} className={`chip ${dept === d ? 'active' : ''}`} onClick={() => pickDept(d)}>
+            {d === 'all' ? 'All departments' : d}
+            {d !== 'all' && deptActionCounts[d] ? <span className="chip-count">{deptActionCounts[d]}</span> : null}
           </button>
         ))}
       </div>
 
-      <div className="flex gap-2 mb-4">
-        <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)}
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', color: 'var(--text-1)', fontSize: 12 }}>
-          {departments.map(d => <option key={d} value={d}>{d === 'all' ? 'All Departments' : d}</option>)}
-        </select>
+      <div className="summary-grid mb-4">
+        {summary.map(s => (
+          <button key={s.label} className="summary-tile" onClick={() => setTab(s.key)}>
+            <div className="text-xs" style={{ color: 'var(--text-2)' }}>{s.label}</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: s.value ? s.color : 'var(--text-3)', marginTop: 4 }}>{s.value || 0}</div>
+          </button>
+        ))}
+      </div>
+
+      <div className="flex gap-2 mb-3 flex-wrap items-center">
+        {BOARD_TABS.filter(t => counts[t.key] || ['action', 'all'].includes(t.key) || tab === t.key).map(t => (
+          <button key={t.key} className={`chip ${tab === t.key ? 'active' : ''}`} onClick={() => setTab(t.key)}>
+            {t.label} <span className="chip-count">{counts[t.key] || 0}</span>
+          </button>
+        ))}
+        <input className="input board-search" placeholder="Search actions or circulars..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       {loading && !maps ? <div className="flex items-center gap-2"><div className="spinner" /> Loading...</div> : (
         <div>
-          {filtered.map(m => {
-            const dr = daysRemaining(m.deadline_date);
+          {rows.map(({ m, s }) => {
+            const others = (families[m.parent_map_id || m.id] || []).filter(d => d !== m.department);
             return (
-              <GlassCard key={m.id} className="mb-2" style={{ padding: '14px 18px', cursor: 'pointer' }} onClick={() => setSelectedMap(m.id)}>
-                <div className="flex justify-between items-center">
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="flex gap-2 items-center mb-1">
-                      <Badge label={m.status} color={statusColor(m.status)} />
-                      <Badge label={m.priority || 'medium'} color={priorityColor(m.priority)} />
-                      <Badge label={m.department} color="var(--cyan)" />
-                      {(m.attack_techniques||'').split(',').filter(Boolean).map(t => <span key={t} className="attack-tag">{t.trim()}</span>)}
-                    </div>
-                    <div className="text-sm font-bold truncate">{m.action_description}</div>
-                    <div className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>
-                      Metric: {m.compliance_metric} / Deadline: {(m.deadline_date||'').slice(0,10)}
-                      {dr.days !== null && <span style={{ color: dr.color, marginLeft: 8 }}>{dr.days < 0 ? `${Math.abs(dr.days)}d overdue` : `${dr.days}d left`}</span>}
-                    </div>
+              <div key={m.id} className="action-row" onClick={() => setSelectedMap(m.id)}>
+                <div className="action-accent" style={{ background: s.tone }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="flex gap-2 items-center flex-wrap">
+                    <StatePill state={s} />
+                    <Badge label={`${m.priority || 'medium'} priority`} color={priorityColor(m.priority)} />
+                    <Badge label={m.department || 'Unassigned'} color="var(--cyan)" />
+                    {others.length > 0 && <span className="text-xs" style={{ color: 'var(--text-2)' }}>Shared with {others.join(', ')}</span>}
+                  </div>
+                  <div className="action-title line-clamp-2">{m.action_description}</div>
+                  <div className="text-xs" style={{ color: 'var(--text-2)' }}>
+                    {m.regulation_source && <strong style={{ color: 'var(--text-1)' }}>{m.regulation_source}</strong>}
+                    {m.regulation_source && DOT}{m.regulation_title || 'Unknown circular'}{DOT}Deadline {fmtDate(m.deadline_date)}
                   </div>
                 </div>
-              </GlassCard>
+                <div className="action-next">{s.next} {'›'}</div>
+              </div>
             );
           })}
-          {filtered.length === 0 && <div className="text-sm" style={{ color: 'var(--text-3)', textAlign: 'center', padding: 40 }}>No MAPs match your filter.</div>}
+          {rows.length === 0 && (
+            <div className="text-sm" style={{ color: 'var(--text-2)', textAlign: 'center', padding: 40 }}>
+              {tab === 'action' ? 'Nothing needs action right now.' : 'No actions in this list.'}
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// MAP DETAIL SCREEN
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-function MapDetailScreen({ mapId, navigate, onBack }) {
+// ════════════════════════════════════════════════════════════════════
+// VALIDATION RESULT — the validator's 8 criteria as a readable checklist
+// ════════════════════════════════════════════════════════════════════
+const CRITERIA_LABELS = [
+  ['criterion_1_action_completion', 'The action has actually been done'],
+  ['criterion_2_subreq_coverage', 'Every part of the requirement is covered'],
+  ['criterion_3_timeliness', 'Done on time (before the deadline)'],
+  ['criterion_4_evidence_specificity', 'Specific and verifiable (dates, reference numbers, names)'],
+  ['criterion_5_document_authenticity', 'Official documents or approvals are referenced'],
+  ['criterion_6_metric_alignment', 'Matches how compliance is measured'],
+  ['criterion_7_verification_match', 'Matches the proof required'],
+  ['criterion_8_completeness', 'Complete on its own, nothing missing'],
+];
+const VERDICT_INFO = {
+  satisfied: { title: 'Accepted: action marked complete', color: 'var(--green)' },
+  partial: { title: 'Partly accepted: add the missing items and submit again', color: 'var(--amber)' },
+  failed: { title: 'Not accepted: see what is missing below', color: 'var(--red)' },
+};
+const SCORE_ICON = { pass: ['✓', 'var(--green)'], partial: ['~', 'var(--amber)'], fail: ['✕', 'var(--red)'] };
+
+function splitGap(text) {
+  const t = text || '';
+  const cut = (marker) => { const i = t.indexOf(marker); return i < 0 ? '' : t.slice(i + marker.length).split('\n\n')[0].trim(); };
+  return { summary: t.split('\n\n')[0].trim(), flags: cut('Automated Red Flags:'), reasoning: cut('Reasoning:') };
+}
+
+function ValidationResult({ verdict, confidence, criteria, gap }) {
+  const info = VERDICT_INFO[verdict] || VERDICT_INFO.failed;
+  let scores = criteria;
+  if (typeof scores === 'string') { try { scores = JSON.parse(scores); } catch { scores = null; } }
+  const g = splitGap(gap);
+  return (
+    <div className="result-box" style={{ borderColor: `color-mix(in srgb, ${info.color} 40%, transparent)`, background: `color-mix(in srgb, ${info.color} 7%, transparent)` }}>
+      <div className="flex justify-between items-center flex-wrap gap-2">
+        <div className="font-bold" style={{ color: info.color, fontSize: 14 }}>{info.title}</div>
+        {confidence && <Badge label={`${confidence} confidence`} color={confidence === 'high' ? 'var(--green)' : confidence === 'medium' ? 'var(--amber)' : 'var(--red)'} />}
+      </div>
+      {scores && (
+        <div className="criteria-list mt-3">
+          {CRITERIA_LABELS.map(([key, label]) => {
+            const [icon, color] = SCORE_ICON[scores[key]] || SCORE_ICON.fail;
+            return <div key={key} className="criteria-item"><span className="criteria-icon" style={{ color, borderColor: color }}>{icon}</span>{label}</div>;
+          })}
+        </div>
+      )}
+      {g.summary && verdict !== 'satisfied' && (
+        <div className="mt-3">
+          <div className="text-xs font-bold" style={{ color: 'var(--text-2)' }}>WHAT IS MISSING</div>
+          <div className="text-sm mt-1" style={{ lineHeight: 1.55 }}>{g.summary}</div>
+        </div>
+      )}
+      {(g.flags || g.reasoning) && (
+        <details className="mt-3 text-xs" style={{ color: 'var(--text-2)' }}>
+          <summary style={{ cursor: 'pointer' }}>How the validator decided</summary>
+          {g.flags && <div className="mt-2"><strong>Automated checks:</strong> {g.flags}</div>}
+          {g.reasoning && <div className="mt-2"><strong>Reviewer notes:</strong> {g.reasoning}</div>}
+        </details>
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// MAP DETAIL — one action: what is required, its status, evidence
+// ════════════════════════════════════════════════════════════════════
+function statusMessage(m, conflict, evidence) {
+  const s = actionState(m);
+  const days = daysRemaining(m.deadline_date).days;
+  switch (m.status) {
+    case 'completed': {
+      const ok = evidence.find(e => e.validation_status === 'pass');
+      return `Evidence was accepted${ok ? ` on ${fmtDate(ok.submitted_at)}` : ''}. Nothing more is needed.`;
+    }
+    case 'superseded':
+      return m.conflict_type === 'C'
+        ? 'This action overlapped with another regulation and was merged into a single combined action. Work on the combined action instead.'
+        : m.conflict_type === 'A'
+          ? 'A newer regulation replaced this requirement. No evidence is needed.'
+          : `This action is archived. ${m.conflict_detail || 'No evidence is needed.'}`;
+    case 'conflict':
+      return conflict && conflict.legal_assigned_at
+        ? `This requirement contradicts another regulation. Legal has been reviewing it since ${fmtDate(conflict.legal_assigned_at)}. Evidence can be submitted once the conflict is resolved.`
+        : 'This requirement contradicts another regulation and is waiting for a manager to assign it to Legal. Evidence cannot be submitted until the conflict is resolved.';
+    case 'pending':
+      return 'The system is deciding which department owns this action. Check back shortly.';
+    case 'partial':
+      return 'Your last evidence was only partly accepted. Read what is missing in the evidence history, then submit again with the missing items.';
+    default:
+      return days !== null && days < 0
+        ? `This action is ${s.label.toLowerCase()}. Submit evidence as soon as possible.`
+        : `Submit evidence showing this action is done${days !== null ? ` before ${fmtDate(m.deadline_date)}` : ''}.`;
+  }
+}
+
+function MapDetailScreen({ mapId, navigate, onBack, onOpenMap }) {
   const actualId = mapId || window.__selectedMapId;
   const { data, loading, refetch } = useApi(actualId ? `/api/maps/${actualId}` : null, [actualId]);
   const [evidenceText, setEvidenceText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState(null);
+  const [formError, setFormError] = useState('');
+  useEffect(() => { setSubmitResult(null); setFormError(''); setEvidenceText(''); }, [actualId]);
 
-  if (!actualId) return <div className="text-sm" style={{ color: 'var(--text-3)', padding: 40, textAlign: 'center' }}>Select a MAP from the board to view details.</div>;
-  if (loading || !data) return <div className="flex items-center gap-2 mt-4"><div className="spinner" /> Loading MAP details...</div>;
+  if (!actualId) return <div className="text-sm" style={{ color: 'var(--text-2)', padding: 40, textAlign: 'center' }}>Select an action from the MAP Board.</div>;
+  if (loading || !data) return <div className="flex items-center gap-2 mt-4"><div className="spinner" /> Loading action...</div>;
 
   const m = data.map;
   const evidence = data.evidence_history || [];
-  const siblings = data.siblings || [];
+  const family = [m, ...(data.siblings || [])].filter(x => x.status !== 'superseded' || x.id === m.id).sort((a, b) => (a.department || '').localeCompare(b.department || ''));
   const reg = data.regulation || {};
+  const state = actionState(m);
   const dr = daysRemaining(m.deadline_date);
+  const canSubmit = ACTIONABLE.includes(m.status);
+  const techniques = (m.attack_techniques || '').split(',').map(t => t.trim()).filter(Boolean);
 
   const submitEvidence = async (e) => {
     e.preventDefault();
-    if (!evidenceText.trim()) return;
+    const fileInput = e.target.querySelector('input[name="evidence_file"]');
+    const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+    if (!evidenceText.trim() && !hasFile) { setFormError('Describe what was done or attach a document.'); return; }
+    setFormError('');
     setSubmitting(true);
     setSubmitResult(null);
     const fd = new FormData(e.target);
     fd.append('evidence_text', evidenceText);
-    fd.append('submitted_by', 'Dashboard User');
-    try {
-      const result = await apiForm(`/api/maps/${actualId}/submit-evidence`, fd);
+    fd.append('submitted_by', `${m.department || 'Department'} team`);
+    const result = await apiForm(`/api/maps/${actualId}/submit-evidence`, fd);
+    if (result && result.verdict) {
       setSubmitResult(result);
-    } catch (err) {
-      console.error(err);
+      setEvidenceText('');
+      e.target.reset();
+    } else {
+      setFormError('The validator could not check this evidence. Please try again in a minute.');
     }
     setSubmitting(false);
-    setEvidenceText('');
     refetch();
   };
 
+  const facts = [
+    { l: 'Department', v: m.department || 'Unassigned' },
+    { l: 'Deadline', v: fmtDate(m.deadline_date), sub: dr.days === null ? '' : dr.days < 0 ? `${plural(-dr.days, 'day')} overdue` : `${plural(dr.days, 'day')} left`, c: dr.color },
+    { l: 'Priority', v: `${m.priority || 'medium'}`, c: priorityColor(m.priority) },
+    { l: 'Regulator', v: reg.source || '-' },
+  ];
+
   return (
     <div className="animate-in">
-      {onBack && <button className="btn btn-outline mb-4" onClick={onBack} style={{fontSize:12}}>â† Back to MAP Board</button>}
+      {onBack && <button className="btn btn-outline mb-4" onClick={onBack} style={{ fontSize: 12 }}>{'←'} Back to MAP Board</button>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
-        <div>
-          <h2 style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.4, marginBottom: 12 }}>{m.action_description}</h2>
-          <div className="flex gap-2 flex-wrap mb-4">
-            <Badge label={m.status} color={statusColor(m.status)} />
-            <Badge label={m.priority} color={priorityColor(m.priority)} />
-            {(m.attack_techniques||'').split(',').filter(Boolean).map(t => <span key={t} className="attack-tag">{t.trim()}</span>)}
+      <div className="detail-grid">
+        <div style={{ minWidth: 0 }}>
+          <div className="mb-2"><StatePill state={state} /></div>
+          <h2 style={{ fontSize: 19, fontWeight: 800, lineHeight: 1.45, marginBottom: 6 }}>{m.action_description}</h2>
+          <div className="text-sm mb-4" style={{ color: 'var(--text-2)' }}>From: {reg.title || 'Unknown circular'}</div>
+
+          <div className="status-banner mb-4" style={{ borderColor: state.tone }}>
+            <div className="text-sm" style={{ lineHeight: 1.55 }}>{statusMessage(m, data.conflict, evidence)}</div>
+            {m.status === 'conflict' && <button className="btn btn-primary mt-3" style={{ fontSize: 12 }} onClick={() => navigate('conflicts')}>Open Conflicts</button>}
           </div>
 
-          <GlassCard className="mb-4" style={{ padding: 16 }}>
-            <div className="grid-3" style={{ gap: 16 }}>
-              {[{l:'Department',v:m.department},{l:'Source',v:reg.title?.slice(0,35)||'-'},{l:'Deadline',v:(m.deadline_date||'').slice(0,10)},
-                {l:'Days Remaining',v:dr.days!==null?`${dr.days}d`:'-',c:dr.color},{l:'Priority',v:m.priority,c:priorityColor(m.priority)},
-                {l:'Routing Reason',v:m.routing_reason||'-'}
-              ].map((c,i) => <div key={i}><div className="text-xs" style={{color:'var(--text-4)'}}>{c.l}</div><div className="text-sm font-bold mt-2" style={{color:c.c||'var(--text-1)'}}>{c.v}</div></div>)}
-            </div>
+          <div className="facts-grid mb-4">
+            {facts.map(f => (
+              <div key={f.l} className="fact">
+                <div className="text-xs" style={{ color: 'var(--text-2)' }}>{f.l}</div>
+                <div className="text-sm font-bold mt-1" style={{ color: f.c || 'var(--text-1)', textTransform: f.l === 'Priority' ? 'capitalize' : 'none' }}>{f.v}</div>
+                {f.sub && <div className="text-xs mt-1" style={{ color: f.c }}>{f.sub}</div>}
+              </div>
+            ))}
+          </div>
+
+          <GlassCard className="mb-4" style={{ padding: 18 }}>
+            <div className="section-title">What counts as done</div>
+            <div className="text-xs font-bold" style={{ color: 'var(--text-2)' }}>HOW COMPLIANCE IS MEASURED</div>
+            <div className="text-sm mt-1 mb-3" style={{ lineHeight: 1.55 }}>{m.compliance_metric || '-'}</div>
+            <div className="text-xs font-bold" style={{ color: 'var(--text-2)' }}>PROOF REQUIRED</div>
+            <div className="text-sm mt-1" style={{ lineHeight: 1.55 }}>{m.verification_method || '-'}</div>
           </GlassCard>
 
-          <GlassCard className="mb-4" style={{ padding: 16 }}>
-            <div className="text-xs" style={{color:'var(--text-4)'}}>Compliance Metric</div>
-            <div className="text-sm mt-2">{m.compliance_metric}</div>
-            <div className="text-xs mt-4" style={{color:'var(--text-4)'}}>Verification Method</div>
-            <div className="text-sm mt-2">{m.verification_method}</div>
-          </GlassCard>
-
-          {m.status !== 'conflict' && m.status !== 'completed' && (
-            <GlassCard className="mb-4" style={{ padding: 16 }}>
-              <div className="section-title">Submit Evidence</div>
+          {canSubmit && (
+            <GlassCard className="mb-4" style={{ padding: 18 }}>
+              <div className="section-title">Submit evidence</div>
+              <ul className="tips text-xs mb-3">
+                <li>Describe what was done, in the past tense ("approved on", "deployed on").</li>
+                <li>Include dates, reference numbers and who approved or signed it.</li>
+                <li>Make sure it covers the proof required above. Attach the document if you have it.</li>
+              </ul>
               <form onSubmit={submitEvidence}>
-                <textarea value={evidenceText} onChange={e => setEvidenceText(e.target.value)} required
-                  placeholder="Describe what has been done to comply with this requirement..."
-                  rows="4" style={{width:'100%',background:'rgba(255,255,255,0.04)',border:'1px solid var(--glass-border)',borderRadius:'var(--radius-sm)',padding:'10px 14px',color:'var(--text-1)',fontSize:13,resize:'vertical'}} />
-                
-                <div className="mt-2" style={{ background:'rgba(0,0,0,0.1)', padding:'8px 12px', borderRadius:'var(--radius-sm)', border:'1px dashed var(--glass-border)' }}>
-                  <div className="text-xs mb-1" style={{color:'var(--text-3)'}}>Attach Evidence Document (PDF/DOCX/Images)</div>
-                  <input type="file" name="evidence_file" className="input" style={{width:'100%', fontSize:12, padding:'4px 0'}} />
-                </div>
-                
-                <button type="submit" className="btn btn-primary mt-3" disabled={submitting} style={{display:'flex', alignItems:'center', gap:8}}>
-                  {submitting ? <><span className="spinner" style={{width:14,height:14}} />Running Validation Agent Pipeline...</> : 'Submit & Run Validation Pipeline'}
+                <textarea value={evidenceText} onChange={e => setEvidenceText(e.target.value)}
+                  placeholder="Example: The Board approved the policy (Resolution BR/2026/117) on 21 October 2026..."
+                  rows="5" className="evidence-input" />
+                <label className="file-drop mt-2">
+                  <span className="text-xs" style={{ color: 'var(--text-2)' }}>Attach a document (PDF, Word, text or image)</span>
+                  <input type="file" name="evidence_file" style={{ fontSize: 12, marginTop: 6 }} />
+                </label>
+                {formError && <div className="text-sm mt-2" style={{ color: 'var(--red)' }}>{formError}</div>}
+                <button type="submit" className="btn btn-primary mt-3" disabled={submitting} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {submitting ? <><span className="spinner" style={{ width: 14, height: 14 }} />Checking evidence (about 10-30 seconds)...</> : 'Submit evidence for review'}
                 </button>
               </form>
-              
-              {submitResult && (
-                <div className="mt-4 animate-in" style={{
-                  padding:16, borderRadius:'var(--radius-md)', 
-                  background: submitResult.verdict==='satisfied'?'rgba(16,185,129,0.05)':submitResult.verdict==='partial'?'rgba(245,158,11,0.05)':'rgba(239,68,68,0.05)',
-                  border:`1px solid ${submitResult.verdict==='satisfied'?'rgba(16,185,129,0.2)':submitResult.verdict==='partial'?'rgba(245,158,11,0.2)':'rgba(239,68,68,0.2)'}`
-                }}>
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="font-bold text-sm flex items-center gap-2">
-                      <span style={{ fontSize:18 }}>{submitResult.verdict==='satisfied'?'✅':submitResult.verdict==='partial'?'⚠️':'❌'}</span> 
-                      Pipeline Verdict: {submitResult.verdict.toUpperCase()}
-                    </div>
-                    <Badge label={`Confidence: ${submitResult.confidence}%`} color={submitResult.confidence > 75 ? 'var(--green)' : 'var(--amber)'} />
-                  </div>
-                  
-                  {submitResult.stages && (
-                    <div className="mb-3" style={{ background:'rgba(0,0,0,0.2)', padding:10, borderRadius:4, border:'1px solid rgba(255,255,255,0.05)' }}>
-                      <div className="text-xs font-bold mb-2" style={{color:'var(--text-3)'}}>PIPELINE STAGES EXECUTED:</div>
-                      {submitResult.stages.map((stg, i) => (
-                        <div key={i} className="text-xs mb-1 flex justify-between">
-                          <span style={{color:'var(--cyan)'}}>✓ Stage {i+1}: {stg.name}</span>
-                          <span style={{color:'var(--text-4)'}}>{stg.time}ms</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+            </GlassCard>
+          )}
 
-                  {submitResult.gap_analysis && (
-                    <div>
-                      <div className="text-xs font-bold mb-1" style={{color:'var(--text-3)'}}>LLM ANALYSIS:</div>
-                      <div className="text-xs" style={{color:'var(--text-2)', lineHeight:1.5, whiteSpace:'pre-wrap'}}>{submitResult.gap_analysis}</div>
-                    </div>
-                  )}
-                </div>
-              )}
+          {submitResult && (
+            <div className="mb-4 animate-in">
+              <ValidationResult verdict={submitResult.verdict} confidence={submitResult.confidence} criteria={submitResult.criteria_scores} gap={submitResult.gap_analysis} />
+            </div>
+          )}
+
+          {techniques.length > 0 && (
+            <GlassCard className="mb-4" style={{ padding: 18 }}>
+              <div className="section-title">Cyber threats this action protects against</div>
+              <div className="flex gap-2 flex-wrap">
+                {techniques.map(t => <span key={t} className="attack-tag">{t}{ATTACK_NAMES[t] ? `${DOT}${ATTACK_NAMES[t]}` : ''}</span>)}
+              </div>
             </GlassCard>
           )}
         </div>
 
-        <div>
-          <GlassCard className="mb-4" style={{ padding: 16 }}>
-            <div className="section-title">Evidence History ({evidence.length})</div>
-            {evidence.length > 0 ? evidence.map((ev, i) => (
-              <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--glass-border)' }}>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <Badge label={ev.validation_status || 'pending'} color={statusColor(ev.validation_status)} />
-                    {ev.validation_confidence && (
-                      <span className="text-xs px-2 py-0.5 rounded-full" style={{
-                        background: ev.validation_confidence === 'high' ? 'rgba(16,185,129,0.12)' : ev.validation_confidence === 'medium' ? 'rgba(245,158,11,0.12)' : 'rgba(239,68,68,0.12)',
-                        color: ev.validation_confidence === 'high' ? '#34d399' : ev.validation_confidence === 'medium' ? '#fbbf24' : '#f87171',
-                        border: '1px solid currentColor',
-                        fontSize: '10px',
-                        textTransform: 'capitalize'
-                      }}>
-                        {ev.validation_confidence} confidence
-                      </span>
-                    )}
+        <div style={{ minWidth: 0 }}>
+          {family.length > 1 && (
+            <GlassCard className="mb-4" style={{ padding: 16 }}>
+              <div className="section-title">Departments sharing this action</div>
+              <div className="text-xs mb-2" style={{ color: 'var(--text-2)' }}>Each department submits its own evidence. The circular is closed when all are complete.</div>
+              {family.map(f => {
+                const fs = actionState(f);
+                const current = f.id === m.id;
+                return (
+                  <div key={f.id} className={`family-row ${current ? 'current' : ''}`} onClick={() => !current && onOpenMap && onOpenMap(f.id)}>
+                    <span className="text-sm font-bold">{f.department}{current ? ' (this page)' : ''}</span>
+                    <span className="text-xs" style={{ color: fs.tone }}>{fs.label}</span>
                   </div>
-                  <span className="text-xs" style={{ color: 'var(--text-3)' }}>{timeAgo(ev.submitted_at)}</span>
-                </div>
-                <div className="text-xs mt-2 line-clamp-2">{ev.evidence_text}</div>
-                {ev.gap_analysis && <div className="text-xs mt-1" style={{color:'var(--amber)'}}>{ev.gap_analysis}</div>}
-              </div>
-            )) : <div className="text-xs" style={{color:'var(--text-3)',padding:10}}>No evidence submitted yet.</div>}
-          </GlassCard>
-
-          {siblings.length > 0 && (
-            <GlassCard style={{ padding: 16 }}>
-              <div className="section-title">Sibling MAPs ({siblings.length})</div>
-              {siblings.map(s => (
-                <div key={s.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--glass-border)', cursor: 'pointer' }} onClick={() => window.__selectedMapId = s.id}>
-                  <Badge label={s.department} color="var(--cyan)" />
-                  <Badge label={s.status} color={statusColor(s.status)} />
-                </div>
-              ))}
+                );
+              })}
             </GlassCard>
           )}
+
+          <GlassCard className="mb-4" style={{ padding: 16 }}>
+            <div className="section-title">Evidence history ({evidence.length})</div>
+            {evidence.length > 0 ? evidence.map(ev => {
+              const v = ev.validation_verdict || (ev.validation_status === 'pass' ? 'satisfied' : ev.validation_status === 'partial' ? 'partial' : ev.validation_status === 'fail' ? 'failed' : null);
+              const info = VERDICT_INFO[v];
+              return (
+                <details key={ev.id} className="history-item">
+                  <summary>
+                    <span className="text-sm font-bold" style={{ color: info ? info.color : 'var(--text-2)' }}>
+                      {v === 'satisfied' ? 'Accepted' : v === 'partial' ? 'Partly accepted' : v === 'failed' ? 'Not accepted' : 'Being checked'}
+                    </span>
+                    <span className="text-xs" style={{ color: 'var(--text-2)' }}>{fmtDate(ev.submitted_at)}{ev.submitted_by ? `${DOT}${ev.submitted_by}` : ''}</span>
+                  </summary>
+                  <div className="text-xs mt-2" style={{ color: 'var(--text-2)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{(ev.evidence_text || '').slice(0, 400)}</div>
+                  {ev.evidence_file_path && <div className="text-xs mt-1" style={{ color: 'var(--cyan)' }}>Attached: {ev.evidence_file_path.split(/[\\/]/).pop().replace(/^[0-9a-f]{8}_/, '')}</div>}
+                  {v && <div className="mt-2"><ValidationResult verdict={v} confidence={ev.validation_confidence} criteria={ev.criteria_scores} gap={ev.gap_analysis} /></div>}
+                </details>
+              );
+            }) : <div className="text-sm" style={{ color: 'var(--text-2)', padding: '6px 0' }}>No evidence submitted yet.</div>}
+          </GlassCard>
         </div>
       </div>
     </div>
   );
 }
+
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CONFLICTS SCREEN
@@ -1169,134 +1466,201 @@ function LegacyConflictsScreen() {
   );
 }
 
-function ConflictsScreen() {
-  const { data: conflicts, loading, refetch } = usePolling('/api/conflicts', 30000);
-  const [resolving, setResolving] = useState(null);
+// ════════════════════════════════════════════════════════════════════
+// CONFLICTS — contradictions between regulations, reviewed by Legal
+// ════════════════════════════════════════════════════════════════════
+const CONFLICT_STEPS = [
+  { key: 'review', label: 'Needs review', color: 'var(--red)', hint: 'Two regulations ask for things that cannot both be done. A manager assigns them to Legal.' },
+  { key: 'legal', label: 'With Legal', color: 'var(--amber)', hint: 'Legal decides how the bank will comply with both regulators.' },
+  { key: 'resolved', label: 'Resolved', color: 'var(--green)', hint: 'Legal has decided. Both actions are back with departments.' },
+  { key: 'auto', label: 'Handled automatically', color: 'var(--cyan)', hint: 'Overlapping actions merged and outdated rules replaced by the system.' },
+];
+
+const conflictStage = c => c.resolution === 'resolved' ? 'resolved' : c.legal_assigned_at ? 'legal' : 'review';
+
+function ConflictsScreen({ navigate }) {
+  const { data: conflicts, loading, refetch } = usePolling('/api/conflicts', 15000);
+  const [tab, setTab] = useState(null);
+  const [busy, setBusy] = useState(null);
+  const [confirming, setConfirming] = useState(null);
   const [error, setError] = useState('');
-  const allConflicts = conflicts || [];
-  const typeB = allConflicts.filter(c => (c.conflict_type || 'B') === 'B');
-  const awaitingHuman = typeB.filter(c => c.resolution !== 'resolved' && !c.legal_assigned_at);
-  const legalReview = typeB.filter(c => c.resolution !== 'resolved' && c.legal_assigned_at);
-  const resolvedB = typeB.filter(c => c.resolution === 'resolved');
-  const autoResolved = allConflicts.filter(c => (c.conflict_type || 'B') !== 'B');
 
-  const assignLegal = async (id) => {
+  const all = conflicts || [];
+  const contradictions = all.filter(c => (c.conflict_type || 'B') === 'B');
+  const groups = {
+    review: contradictions.filter(c => conflictStage(c) === 'review'),
+    legal: contradictions.filter(c => conflictStage(c) === 'legal'),
+    resolved: contradictions.filter(c => conflictStage(c) === 'resolved'),
+    auto: all.filter(c => (c.conflict_type || 'B') !== 'B'),
+  };
+  const current = tab || (groups.review.length ? 'review' : groups.legal.length ? 'legal' : 'resolved');
+  const step = CONFLICT_STEPS.find(s => s.key === current);
+
+  const post = async (url, id) => {
+    setBusy(id);
     setError('');
-    const result = await api(`/api/conflicts/${id}/assign-legal`, { method: 'POST' });
-    if (!result) {
-      setError('Could not assign this conflict to Legal.');
-      return;
+    try {
+      const r = await fetch(url, { method: 'POST' });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) setError(body.detail || 'That did not work. Please try again.');
+    } catch {
+      setError('Could not reach the server. Please try again.');
     }
+    setBusy(null);
+    setConfirming(null);
     refetch();
   };
-
-  const resolveConflict = async (id) => {
-    setResolving(id);
-    setError('');
-    const result = await api(`/api/conflicts/${id}/resolve`, { method: 'POST' });
-    if (!result || result.status !== 'resolved') {
-      setError('Type B conflicts must complete human/legal review before routing resumes.');
-      setResolving(null);
-      return;
-    }
-    setResolving(null);
-    refetch();
-  };
-
-  const sections = [
-    { key: 'human', title: 'Human Intervention Required', hint: 'Assign these Type B contradictions to Legal first.', rows: awaitingHuman, color: 'var(--red)' },
-    { key: 'legal', title: 'Legal Review In Progress', hint: 'Resolving from here sends both MAPs back to the router agent.', rows: legalReview, color: 'var(--amber)' },
-    { key: 'routed', title: 'Resolved And Routed', hint: 'Human review is complete and routing has resumed.', rows: resolvedB, color: 'var(--green)' },
-  ];
 
   return (
     <div className="animate-in">
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h1 className="page-title">Conflicts</h1>
-          <div className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>Human review queue and system-handled regulatory conflicts</div>
+      <div className="mb-4">
+        <h1 className="page-title">Conflicts</h1>
+        <div className="text-sm mt-1" style={{ color: 'var(--text-2)' }}>
+          When two regulations ask for things that cannot both be done, the affected actions are put on hold until Legal decides how to comply.
         </div>
       </div>
+
+      <div className="step-tabs mb-4">
+        {CONFLICT_STEPS.map((s, i) => (
+          <button key={s.key} className={`step-tab ${current === s.key ? 'active' : ''}`} onClick={() => setTab(s.key)}
+            style={current === s.key ? { borderColor: s.color } : null}>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold" style={{ color: s.color }}>{i < 3 ? `STEP ${i + 1}` : 'SYSTEM'}</span>
+              <span style={{ fontSize: 20, fontWeight: 800, color: groups[s.key].length ? s.color : 'var(--text-3)' }}>{groups[s.key].length}</span>
+            </div>
+            <div className="text-sm font-bold mt-1">{s.label}</div>
+          </button>
+        ))}
+      </div>
+
+      <div className="text-sm mb-3" style={{ color: 'var(--text-2)' }}>{step.hint}</div>
+      {error && <div className="conflict-banner mb-4 text-sm">{error}</div>}
+
       {loading && !conflicts ? <div className="flex items-center gap-2"><div className="spinner" /> Loading...</div> : (
         <div>
-          {error && <div className="conflict-banner mb-4 text-sm">{error}</div>}
-          <div className="metrics-row mb-4">
-            <GlassCard className="metric-card"><div className="metric-label">Needs Human Review</div><div className="metric-value" style={{ color: 'var(--red)' }}>{awaitingHuman.length}</div></GlassCard>
-            <GlassCard className="metric-card"><div className="metric-label">With Legal</div><div className="metric-value" style={{ color: 'var(--amber)' }}>{legalReview.length}</div></GlassCard>
-            <GlassCard className="metric-card"><div className="metric-label">Routed After Review</div><div className="metric-value" style={{ color: 'var(--green)' }}>{resolvedB.length}</div></GlassCard>
-            <GlassCard className="metric-card"><div className="metric-label">Auto Handled</div><div className="metric-value" style={{ color: 'var(--cyan)' }}>{autoResolved.length}</div></GlassCard>
-          </div>
-
-          {sections.map(section => section.rows.length ? (
-            <div key={section.key} className="mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <span style={{ fontSize: 13, fontWeight: 800, color: section.color }}>{section.title}</span>
-                <span className="text-xs" style={{ color: 'var(--text-4)' }}>{section.hint}</span>
-                <Badge label={`${section.rows.length}`} color={section.color} />
-              </div>
-              {section.rows.map(c => (
-                <ConflictReviewCard key={c.id} conflict={c} resolving={resolving} onAssignLegal={assignLegal} onResolve={resolveConflict} />
+          {current === 'auto'
+            ? groups.auto.map(c => <AutoConflictRow key={c.id} c={c} navigate={navigate} />)
+            : groups[current].map(c => (
+                <ConflictCard key={c.id} c={c} navigate={navigate} busy={busy === c.id} confirming={confirming === c.id}
+                  onAssign={() => post(`/api/conflicts/${c.id}/assign-legal`, c.id)}
+                  onAskResolve={() => setConfirming(c.id)} onCancel={() => setConfirming(null)}
+                  onResolve={() => post(`/api/conflicts/${c.id}/resolve`, c.id)} />
               ))}
-            </div>
-          ) : null)}
-
-          {autoResolved.length > 0 && (
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--cyan)' }}>System-Handled Conflicts</span>
-                <span className="text-xs" style={{ color: 'var(--text-4)' }}>Superseded and merged conflicts handled automatically.</span>
-                <Badge label={`${autoResolved.length}`} color="var(--cyan)" />
-              </div>
-              {autoResolved.map(c => (
-                <GlassCard key={c.id} className="mb-2" style={{ padding: '14px 18px', borderColor: 'rgba(6,182,212,0.14)' }}>
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="flex gap-2">
-                      <Badge label={`Type ${c.conflict_type}`} color={c.conflict_type === 'C' ? 'var(--amber)' : 'var(--text-3)'} />
-                      <Badge label={c.resolution || 'handled'} color="var(--green)" />
-                    </div>
-                    <span className="text-xs" style={{ color: 'var(--text-3)' }}>{timeAgo(c.resolved_at || c.created_at)}</span>
-                  </div>
-                  <div className="text-sm font-bold line-clamp-2">{c.description || 'Conflict handled by system logic'}</div>
-                </GlassCard>
-              ))}
-            </div>
+          {groups[current].length === 0 && (
+            <div className="text-sm" style={{ color: 'var(--text-2)', textAlign: 'center', padding: 40 }}>Nothing here right now.</div>
           )}
-          {allConflicts.length === 0 && <div className="text-sm" style={{ color: 'var(--text-3)', textAlign: 'center', padding: 40 }}>No conflicts detected.</div>}
         </div>
       )}
     </div>
   );
 }
 
-function ConflictReviewCard({ conflict: c, resolving, onAssignLegal, onResolve }) {
-  const assigned = !!c.legal_assigned_at;
-  const resolved = c.resolution === 'resolved';
-  const stage = resolved ? 'Routed after review' : assigned ? 'Legal review assigned' : 'Awaiting human intervention';
-  const stageColor = resolved ? 'var(--green)' : assigned ? 'var(--amber)' : 'var(--red)';
+function RulePanel({ n, source, regulation, dept, deadline, status, action, onOpen }) {
+  const st = actionState({ status, deadline_date: deadline });
   return (
-    <GlassCard className="mb-2" style={{ padding: '16px 20px', borderColor: resolved ? 'rgba(16,185,129,0.2)' : assigned ? 'rgba(251,191,36,0.22)' : 'rgba(239,68,68,0.28)' }}>
-      <div className="flex justify-between items-center mb-2">
-        <div className="flex gap-2"><Badge label="Type B - Contradiction" color="var(--red)" /><Badge label={stage} color={stageColor} /></div>
-        <span className="text-xs" style={{ color: 'var(--text-3)' }}>{timeAgo(c.resolved_at || c.legal_assigned_at || c.created_at)}</span>
+    <div className="rule-panel">
+      <div className="flex justify-between items-center gap-2 flex-wrap">
+        <span className="text-xs font-bold" style={{ color: 'var(--text-2)' }}>RULE {n}</span>
+        {source && <Badge label={source} color="var(--purple)" />}
       </div>
-      <div className="text-sm font-bold">{c.description || 'Operational conflict detected between two MAPs'}</div>
-      <div className="grid-2 mt-3" style={{ gap: 10 }}>
-        <div style={{ padding: 12, background: 'rgba(255,255,255,0.025)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--glass-border)' }}>
-          <div className="text-xs" style={{ color: 'var(--text-4)' }}>MAP 1 - {c.map_1_dept || 'Unassigned'}</div>
-          <div className="text-xs mt-1 line-clamp-3">{c.map_1_action}</div>
-        </div>
-        <div style={{ padding: 12, background: 'rgba(255,255,255,0.025)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--glass-border)' }}>
-          <div className="text-xs" style={{ color: 'var(--text-4)' }}>MAP 2 - {c.map_2_dept || 'Unassigned'}</div>
-          <div className="text-xs mt-1 line-clamp-3">{c.map_2_action}</div>
-        </div>
+      <div className="text-xs mt-1" style={{ color: 'var(--text-2)' }}>{regulation || 'Unknown circular'}</div>
+      <div className="text-sm font-bold mt-2" style={{ lineHeight: 1.5 }}>{action}</div>
+      <div className="text-xs mt-2" style={{ color: 'var(--text-2)' }}>
+        {dept || 'Unassigned'}{DOT}Deadline {fmtDate(deadline)}{DOT}<span style={{ color: st.tone }}>{st.label}</span>
       </div>
-      {!resolved && (
-        <div className="flex gap-2 mt-4 flex-wrap">
-          {!assigned && <button className="btn btn-primary" style={{fontSize:12,padding:'6px 14px'}} onClick={() => onAssignLegal(c.id)}>Assign to Legal</button>}
-          {assigned && <button className="btn btn-primary" style={{fontSize:12,padding:'6px 14px'}} onClick={() => onResolve(c.id)} disabled={resolving === c.id}>{resolving === c.id ? 'Routing...' : 'Resolve and Route MAPs'}</button>}
-          <span className="text-xs" style={{ color: 'var(--text-3)', alignSelf: 'center' }}>{assigned ? 'Router agent will choose department ownership after resolution.' : 'Human intervention is required before routing resumes.'}</span>
-        </div>
+      <button className="link-btn mt-2" onClick={onOpen}>Open action {'›'}</button>
+    </div>
+  );
+}
+
+function ConflictCard({ c, navigate, busy, confirming, onAssign, onAskResolve, onCancel, onResolve }) {
+  const stage = conflictStage(c);
+  const [why, suggestion] = (c.description || '').split(' | ');
+  const timeline = [
+    { label: 'Detected', date: c.created_at, done: true },
+    { label: 'Assigned to Legal', date: c.legal_assigned_at, done: !!c.legal_assigned_at },
+    { label: 'Resolved', date: c.resolved_at, done: stage === 'resolved' },
+  ];
+  return (
+    <GlassCard className="mb-3" style={{ padding: '18px 20px' }}>
+      <div className="timeline mb-3">
+        {timeline.map((t, i) => (
+          <div key={t.label} className={`timeline-step ${t.done ? 'done' : ''}`}>
+            <span className="timeline-dot">{t.done ? '✓' : i + 1}</span>
+            <span>
+              <span className="text-xs font-bold">{t.label}</span>
+              <span className="text-xs" style={{ color: 'var(--text-2)', display: 'block' }}>{t.done && t.date ? fmtDate(t.date) : 'Not yet'}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="text-xs font-bold" style={{ color: 'var(--text-2)' }}>WHY THEY CONFLICT</div>
+      <div className="text-sm mt-1" style={{ lineHeight: 1.55 }}>{why || 'These two requirements cannot both be satisfied.'}</div>
+      {suggestion && (
+        <>
+          <div className="text-xs font-bold mt-3" style={{ color: 'var(--text-2)' }}>SUGGESTED APPROACH</div>
+          <div className="text-sm mt-1" style={{ lineHeight: 1.55 }}>{suggestion}</div>
+        </>
       )}
+
+      <div className="rule-grid mt-4">
+        <RulePanel n={1} source={c.map_1_source} regulation={c.map_1_regulation} dept={c.map_1_dept} deadline={c.map_1_deadline}
+          status={c.map_1_status} action={c.map_1_action} onOpen={() => navigate('maps', { mapId: c.map_id_1 })} />
+        <RulePanel n={2} source={c.map_2_source} regulation={c.map_2_regulation} dept={c.map_2_dept} deadline={c.map_2_deadline}
+          status={c.map_2_status} action={c.map_2_action} onOpen={() => navigate('maps', { mapId: c.map_id_2 })} />
+      </div>
+
+      <div className="next-step mt-4">
+        {stage === 'review' && (
+          <>
+            <div className="text-sm" style={{ lineHeight: 1.5 }}>
+              <strong>Next step:</strong> assign this to Legal. Both actions stay on hold, so no department can submit evidence for them yet.
+            </div>
+            <button className="btn btn-primary" disabled={busy} onClick={onAssign}>{busy ? 'Assigning...' : 'Assign to Legal'}</button>
+          </>
+        )}
+        {stage === 'legal' && !confirming && (
+          <>
+            <div className="text-sm" style={{ lineHeight: 1.5 }}>
+              <strong>Next step:</strong> once Legal has agreed how the bank will comply, mark this resolved. Both actions are then re-assigned to departments and become active again.
+            </div>
+            <button className="btn btn-primary" onClick={onAskResolve}>Mark as resolved</button>
+          </>
+        )}
+        {stage === 'legal' && confirming && (
+          <>
+            <div className="text-sm" style={{ lineHeight: 1.5, color: 'var(--amber)' }}>
+              Confirm Legal has agreed the approach. Both actions will leave hold and be re-assigned to departments.
+            </div>
+            <div className="flex gap-2">
+              <button className="btn btn-outline" onClick={onCancel} disabled={busy}>Cancel</button>
+              <button className="btn btn-primary" onClick={onResolve} disabled={busy}>{busy ? 'Resolving...' : 'Yes, resolve'}</button>
+            </div>
+          </>
+        )}
+        {stage === 'resolved' && (
+          <div className="text-sm" style={{ lineHeight: 1.5, color: 'var(--green)' }}>
+            Resolved on {fmtDate(c.resolved_at)}. Both actions are active again; open them above to submit evidence.
+          </div>
+        )}
+      </div>
+    </GlassCard>
+  );
+}
+
+function AutoConflictRow({ c, navigate }) {
+  const merged = c.conflict_type === 'C';
+  return (
+    <GlassCard className="mb-2" style={{ padding: '14px 18px' }}>
+      <div className="flex justify-between items-center gap-2 flex-wrap mb-2">
+        <Badge label={merged ? 'Merged: overlapping actions' : 'Replaced: newer rule'} color={merged ? 'var(--cyan)' : 'var(--text-2)'} />
+        <span className="text-xs" style={{ color: 'var(--text-2)' }}>{fmtDate(c.resolved_at || c.created_at)}</span>
+      </div>
+      <div className="text-sm" style={{ lineHeight: 1.5 }}>{(c.description || '').split(' | ')[0] || 'Handled automatically.'}</div>
+      <div className="text-xs mt-2" style={{ color: 'var(--text-2)', lineHeight: 1.5 }}>
+        {c.map_1_source || '?'}: {c.map_1_action}<br />{c.map_2_source || '?'}: {c.map_2_action}
+      </div>
     </GlassCard>
   );
 }
@@ -1641,14 +2005,15 @@ function App() {
   const { data: dashboard } = usePolling('/api/dashboard', 15000);
   const counts = { newRegs: dashboard?.new_circulars || 0, conflicts: dashboard?.conflicts || 0 };
 
-  const navigate = (p) => setPage(p);
+  const [openMapId, setOpenMapId] = useState(null);
+  const navigate = (p, opts = {}) => { setOpenMapId(opts.mapId || null); setPage(p); };
 
   const screens = {
     dashboard: <DashboardScreen dashboard={dashboard} navigate={navigate} />,
     inbox: <InboxScreen navigate={navigate} />,
-    maps: <MapBoardScreen navigate={navigate} />,
+    maps: <MapBoardScreen key={openMapId || 'board'} navigate={navigate} initialMapId={openMapId} />,
     map_detail: <MapDetailScreen navigate={navigate} />,
-    conflicts: <ConflictsScreen />,
+    conflicts: <ConflictsScreen navigate={navigate} />,
     threat: <ThreatIntelScreen navigate={navigate} />,
     audit: <AuditTrailScreen />,
     risk: <RiskReportScreen />,

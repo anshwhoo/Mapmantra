@@ -7,7 +7,7 @@ import json
 import logging
 import re
 
-from langchain_ollama import ChatOllama
+from agents.llm import chat_llm
 from langchain_core.messages import SystemMessage, HumanMessage
 
 import db
@@ -25,6 +25,26 @@ SYSTEM_PROMPT = (
 )
 
 
+def _normalize_threat_result(parsed) -> dict:
+    """Models sometimes answer with a bare list (e.g. `[]` when no technique applies,
+    or `["T1078"]`) instead of the requested object; treat it as the technique list."""
+    if isinstance(parsed, dict):
+        return parsed
+    if isinstance(parsed, list):
+        techniques, names = [], []
+        for item in parsed:
+            if isinstance(item, str):
+                techniques.append(item)
+            elif isinstance(item, dict):
+                tid = item.get("technique_id") or item.get("id") or item.get("attack_technique")
+                if tid:
+                    techniques.append(str(tid))
+                if item.get("technique_name") or item.get("name"):
+                    names.append(item.get("technique_name") or item.get("name"))
+        return {"attack_techniques": techniques, "technique_names": names, "explanation": ""}
+    return {}
+
+
 def _parse_threat_response(raw: str) -> dict:
     """Parse threat mapping from LLM output."""
     cleaned = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL)
@@ -33,7 +53,7 @@ def _parse_threat_response(raw: str) -> dict:
     cleaned = cleaned.strip()
 
     try:
-        return json.loads(cleaned)
+        return _normalize_threat_result(json.loads(cleaned))
     except json.JSONDecodeError:
         pass
 
@@ -72,7 +92,7 @@ def run_threat_mapper(map_ids: list = None) -> dict:
         logger.info("No MAPs to map to MITRE ATT&CK")
         return {"mapped": 0}
 
-    llm = ChatOllama(model="qwen3:8b", temperature=0.1, timeout=120)
+    llm = chat_llm()
     mapped = 0
 
     for map_row in maps_to_process:

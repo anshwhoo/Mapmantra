@@ -1,10 +1,9 @@
 """
 main.py — FastAPI Backend Server
-Hosts all REST endpoints, APScheduler jobs, and CORS setup.
+Hosts all REST endpoints, the concurrent pipeline workers, and CORS setup.
 """
 
 import logging
-import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -12,17 +11,12 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, Body, UploadFile, HTTPException, Query, Request
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from apscheduler.schedulers.background import BackgroundScheduler
 
 import db
-from agents.ingestion import run_ingestion, ingest_manual_upload
-from agents.extractor import run_extractor
+from agents.ingestion import ingest_manual_upload
 from agents.validator import validate_evidence
-from agents.supervisor import run_pipeline, scheduled_supervisor_run
 from agents.risk_score import compute_risk_scores
-from agents.conflict import run_conflict_detector
-from agents.router import run_router
-from agents.threat_mapper import run_threat_mapper
+from agents import workers
 
 load_dotenv()
 
@@ -32,328 +26,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger("main")
 
-# ── APScheduler ──────────────────────────────────────────────────
-scheduler = BackgroundScheduler()
-
-
-def execute_pipeline_for_regulations(regulation_ids: list):
-    """Orchestrates the pipeline chain for each regulation:
-    For each regulation:
-      extractor -> router -> conflict_detector -> threat_mapper.
-    Router runs BEFORE conflict detector so MAPs move to in_progress quickly.
-    Conflict detection is slow (embedding + LLM per MAP) and should not block routing.
-    Catches errors at each stage, logs them to the audit trail, and continues.
-    """
-    if not regulation_ids:
-        return
-    logger.info("Starting pipeline chain for %d regulations", len(regulation_ids))
-
-    for reg_id in regulation_ids:
-        logger.info("Processing regulation ID: %s", reg_id)
-        
-        # 1. Extractor — extract MAPs from the regulation text
-        regulation = db.fetch_one("SELECT id, status FROM regulations WHERE id = ?", (reg_id,))
-        if not regulation:
-            logger.warning("Regulation %s not found, skipping", reg_id)
-            continue
-
-        if regulation["status"] == "new":
-            try:
-                extractor_summary = run_extractor(regulation_ids=[reg_id])
-                logger.info("Extractor complete for regulation %s: %s", reg_id, extractor_summary)
-            except Exception as exc:
-                logger.error("Extractor failed for regulation %s: %s", reg_id, exc)
-                try:
-                    db.insert_audit_entry(
-                        agent="extractor",
-                        action="extractor failed",
-                        detail={"error": str(exc)},
-                        regulation_id=reg_id,
-                    )
-                except Exception as audit_exc:
-                    logger.error("Failed to write extractor error to audit log: %s", audit_exc)
-                continue
-        else:
-            logger.info(
-                "Regulation %s is %s; skipping extraction and routing existing pending MAPs",
-                reg_id,
-                regulation["status"],
-            )
-
-        # 2. Retrieve newly extracted MAPs for this regulation
-        new_map_ids = []
-        try:
-            new_maps = db.fetch_all(
-                "SELECT id FROM maps WHERE regulation_id = ? AND status = 'pending'",
-                (reg_id,)
-            )
-            new_map_ids = [m["id"] for m in new_maps]
-        except Exception as exc:
-            logger.error("Failed to query newly extracted MAPs for regulation %s: %s", reg_id, exc)
-            try:
-                db.insert_audit_entry(
-                    agent="supervisor",
-                    action="chain_error",
-                    detail={"error": f"Failed to query newly extracted MAPs: {exc}"},
-                    regulation_id=reg_id,
-                )
-            except Exception as audit_exc:
-                logger.error("Failed to write query error to audit log: %s", audit_exc)
-
-        if not new_map_ids:
-            logger.info("No pending MAPs to route for regulation %s, skipping", reg_id)
-            continue
-
-        logger.info("Regulation %s: %d pending MAPs found, starting router catch-up...", reg_id, len(new_map_ids))
-
-        # 3. Router FIRST — assign departments and move to in_progress immediately
-        #    This runs before conflict detection so MAPs don't sit in pending for hours.
-        try:
-            router_summary = run_router()
-            logger.info("Router complete for regulation %s: %s", reg_id, router_summary)
-        except Exception as exc:
-            logger.error("Router failed for regulation %s: %s", reg_id, exc)
-            try:
-                db.insert_audit_entry(
-                    agent="router",
-                    action="router failed",
-                    detail={"error": str(exc)},
-                    regulation_id=reg_id,
-                )
-            except Exception as audit_exc:
-                logger.error("Failed to write router error to audit log: %s", audit_exc)
-
-        # 4. Conflict Detector — check for regulatory conflicts among routed MAPs
-        #    Uses embeddings + LLM comparisons (slow, 3-8 min per MAP).
-        #    Now queries all MAPs for this regulation regardless of status.
-        all_reg_map_ids = []
-        try:
-            all_reg_maps = db.fetch_all(
-                "SELECT id FROM maps WHERE regulation_id = ? AND status NOT IN ('superseded', 'conflict')",
-                (reg_id,)
-            )
-            all_reg_map_ids = [m["id"] for m in all_reg_maps]
-        except Exception as exc:
-            logger.error("Failed to query MAPs for conflict detection for regulation %s: %s", reg_id, exc)
-
-        if all_reg_map_ids:
-            try:
-                conflict_summary = run_conflict_detector(map_ids=all_reg_map_ids)
-                logger.info("Conflict detector complete for regulation %s: %s", reg_id, conflict_summary)
-            except Exception as exc:
-                logger.error("Conflict detector failed for regulation %s: %s", reg_id, exc)
-                try:
-                    db.insert_audit_entry(
-                        agent="conflict_detector",
-                        action="conflict detector failed",
-                        detail={"error": str(exc)},
-                        regulation_id=reg_id,
-                    )
-                except Exception as audit_exc:
-                    logger.error("Failed to write conflict detector error to audit log: %s", audit_exc)
-
-        # 5. Threat Mapper on the routed MAPs (status = 'in_progress', empty attack_techniques)
-        assigned_map_ids = []
-        try:
-            assigned_maps = db.fetch_all(
-                """SELECT id FROM maps 
-                   WHERE regulation_id = ? 
-                   AND status = 'in_progress' 
-                   AND (attack_techniques IS NULL OR attack_techniques = '')""",
-                (reg_id,)
-            )
-            assigned_map_ids = [m["id"] for m in assigned_maps]
-        except Exception as exc:
-            logger.error("Failed to query MAPs for threat mapping for regulation %s: %s", reg_id, exc)
-            try:
-                db.insert_audit_entry(
-                    agent="supervisor",
-                    action="chain_error",
-                    detail={"error": f"Failed to query assigned MAPs: {exc}"},
-                    regulation_id=reg_id,
-                )
-            except Exception as audit_exc:
-                logger.error("Failed to write query error to audit log: %s", audit_exc)
-
-        if assigned_map_ids:
-            try:
-                threat_summary = run_threat_mapper(map_ids=assigned_map_ids)
-                logger.info("Threat mapper complete for regulation %s: %s", reg_id, threat_summary)
-            except Exception as exc:
-                logger.error("Threat mapper failed for regulation %s: %s", reg_id, exc)
-                try:
-                    db.insert_audit_entry(
-                        agent="threat_mapper",
-                        action="threat mapper failed",
-                        detail={"error": str(exc)},
-                        regulation_id=reg_id,
-                    )
-                except Exception as audit_exc:
-                    logger.error("Failed to write threat mapper error to audit log: %s", audit_exc)
-
-        # Update regulation status to 'processed' since the pipeline completed
-        try:
-            db.execute("UPDATE regulations SET status = 'processed' WHERE id = ?", (reg_id,))
-            db.insert_audit_entry(
-                agent="supervisor",
-                action="pipeline complete",
-                detail={"status": "processed"},
-                regulation_id=reg_id,
-            )
-            logger.info("Regulation %s status updated to 'processed'", reg_id)
-        except Exception as exc:
-            logger.error("Failed to update regulation %s status to processed: %s", reg_id, exc)
-
-    logger.info("Pipeline chain complete for %d regulations", len(regulation_ids))
-
-
-def run_ingestion_chain(run_fetch: bool = True):
-    """Runs ingestion and triggers the downstream pipeline if new circulars are found or existing ones are new."""
-    logger.info("Ingestion Chain starting (run_fetch=%s)", run_fetch)
-    
-    if run_fetch:
-        try:
-            summary = run_ingestion(
-                email_host=os.getenv("EMAIL_HOST", ""),
-                email_port=int(os.getenv("EMAIL_PORT", "993")),
-                email_user=os.getenv("EMAIL_USER", ""),
-                email_password=os.getenv("EMAIL_PASSWORD", ""),
-                email_folder=os.getenv("EMAIL_FOLDER", "INBOX"),
-            )
-            total = summary.get("total", 0)
-            logger.info("Ingestion agent completed. Found %d new regulations.", total)
-        except Exception as exc:
-            logger.error("Ingestion agent failed: %s", exc)
-            try:
-                db.insert_audit_entry(
-                    agent="ingestion",
-                    action="ingestion failed",
-                    detail={"error": str(exc)},
-                )
-            except Exception as audit_exc:
-                logger.error("Failed to write ingestion error to audit log: %s", audit_exc)
-
-    # Always process new regulations and catch up regulations that still have pending MAPs.
-    try:
-        new_regs = db.fetch_all(
-            """SELECT DISTINCT r.id
-               FROM regulations r
-               LEFT JOIN maps m ON m.regulation_id = r.id AND m.status = 'pending'
-               WHERE r.status = 'new' OR m.id IS NOT NULL"""
-        )
-        new_reg_ids = [r["id"] for r in new_regs]
-    except Exception as exc:
-        logger.error("Failed to query regulations needing processing: %s", exc)
-        new_reg_ids = []
-
-    if new_reg_ids:
-        logger.info("Found %d regulations needing pipeline processing. Triggering pipeline chain.", len(new_reg_ids))
-        execute_pipeline_for_regulations(new_reg_ids)
-    else:
-        logger.info("No new regulations or pending MAPs found.")
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup and shutdown lifecycle."""
+    """Startup and shutdown lifecycle: every agent runs as its own concurrent worker."""
     db.init_db()
     logger.info("Database initialized")
-
-    # Ingestion interval configurable, defaults to 24 hours (1440 minutes)
-    ingestion_interval = int(os.getenv("INGESTION_INTERVAL_MINUTES", "1440"))
-    # Supervisor interval defaults to 30 minutes
-    supervisor_interval = int(os.getenv("SUPERVISOR_INTERVAL_MINUTES", "30"))
-
-    # Schedule the jobs using APScheduler
-    scheduler.add_job(run_ingestion_chain, "interval", minutes=ingestion_interval, id="ingestion_job")
-    scheduler.add_job(scheduled_supervisor_run, "interval", minutes=supervisor_interval, id="supervisor_job")
-    scheduler.start()
-    logger.info("Scheduler started — ingestion every %dm, supervisor every %dm", ingestion_interval, supervisor_interval)
-
-    # Run once immediately on startup in a background thread
-    import threading
-    def startup_run():
-        # 1. Process any regulations stuck in 'processing' with pending MAPs
-        #    (These had extraction done but router/conflict/threat never ran)
-        try:
-            stuck_regs = db.fetch_all(
-                """SELECT DISTINCT r.id FROM regulations r
-                   JOIN maps m ON m.regulation_id = r.id
-                   WHERE r.status = 'processing' AND m.status = 'pending'"""
-            )
-            stuck_ids = [r["id"] for r in stuck_regs]
-            if stuck_ids:
-                logger.info("Startup recovery: found %d stuck regulations with pending MAPs, resuming pipeline...", len(stuck_ids))
-                # For stuck regs, MAPs are already extracted — run router + conflict + threat only
-                for reg_id in stuck_ids:
-                    logger.info("Recovering regulation %s — routing pending MAPs...", reg_id)
-                    pending = db.fetch_all(
-                        "SELECT id FROM maps WHERE regulation_id = ? AND status = 'pending'",
-                        (reg_id,)
-                    )
-                    pending_ids = [m["id"] for m in pending]
-                    if not pending_ids:
-                        continue
-
-                    # Router
-                    try:
-                        rsummary = run_router(map_ids=pending_ids)
-                        logger.info("Recovery router for %s: %s", reg_id, rsummary)
-                    except Exception as exc:
-                        logger.error("Recovery router failed for %s: %s", reg_id, exc)
-
-                    # Conflict detector
-                    try:
-                        all_maps = db.fetch_all(
-                            "SELECT id FROM maps WHERE regulation_id = ? AND status NOT IN ('superseded','conflict')",
-                            (reg_id,)
-                        )
-                        if all_maps:
-                            csummary = run_conflict_detector(map_ids=[m["id"] for m in all_maps])
-                            logger.info("Recovery conflict detector for %s: %s", reg_id, csummary)
-                    except Exception as exc:
-                        logger.error("Recovery conflict detector failed for %s: %s", reg_id, exc)
-
-                    # Threat mapper
-                    try:
-                        routed = db.fetch_all(
-                            """SELECT id FROM maps WHERE regulation_id = ?
-                               AND status = 'in_progress'
-                               AND (attack_techniques IS NULL OR attack_techniques = '')""",
-                            (reg_id,)
-                        )
-                        if routed:
-                            tsummary = run_threat_mapper(map_ids=[m["id"] for m in routed])
-                            logger.info("Recovery threat mapper for %s: %s", reg_id, tsummary)
-                    except Exception as exc:
-                        logger.error("Recovery threat mapper failed for %s: %s", reg_id, exc)
-
-                    # Mark as processed
-                    try:
-                        db.execute("UPDATE regulations SET status = 'processed' WHERE id = ?", (reg_id,))
-                        logger.info("Recovery: regulation %s marked as processed", reg_id)
-                    except Exception as exc:
-                        logger.error("Failed to update regulation %s status: %s", reg_id, exc)
-
-                logger.info("Startup recovery complete for %d stuck regulations", len(stuck_ids))
-        except Exception as exc:
-            logger.error("Startup recovery failed: %s", exc)
-
-        # 2. Process regulations with status = 'new'
-        logger.info("Immediate startup run: processing existing new regulations...")
-        run_ingestion_chain(run_fetch=False)
-        logger.info("Immediate startup run: running ingestion fetch...")
-        run_ingestion_chain(run_fetch=True)
-        logger.info("Immediate startup run complete.")
-
-    threading.Thread(target=startup_run, daemon=True).start()
-    threading.Thread(target=scheduled_supervisor_run, daemon=True).start()
-    logger.info("Triggered initial runs of ingestion chain and supervisor in background threads")
+    workers.start_workers()
 
     yield
 
-    scheduler.shutdown()
-    logger.info("Scheduler stopped")
+    workers.stop_workers()
+    logger.info("Workers stopped")
 
 
 from fastapi.responses import HTMLResponse
@@ -488,14 +172,9 @@ async def upload_regulation(
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
 
-    reg_id = result.get("regulation_id")
-    if reg_id:
-        try:
-            execute_pipeline_for_regulations([reg_id])
-            result["pipeline"] = {"status": "success", "regulation_id": reg_id}
-        except Exception as exc:
-            logger.error("Pipeline failed after upload: %s", exc)
-            result["pipeline_error"] = str(exc)
+    if result.get("regulation_id"):
+        workers.prioritize_regulation(result["regulation_id"])
+        result["pipeline"] = {"status": "queued", "regulation_id": result["regulation_id"]}
 
     return result
 
@@ -510,22 +189,24 @@ def list_maps(
     status: str = Query(None),
     search: str = Query(None),
 ):
-    """List MAPs with optional filters."""
-    query = "SELECT * FROM maps WHERE 1=1"
+    """List MAPs with optional filters, including the source regulation's title and regulator."""
+    query = """SELECT m.*, r.title AS regulation_title, r.source AS regulation_source
+               FROM maps m LEFT JOIN regulations r ON r.id = m.regulation_id
+               WHERE 1=1"""
     params = []
     if department:
-        query += " AND department = ?"
+        query += " AND m.department = ?"
         params.append(department)
     if priority:
-        query += " AND priority = ?"
+        query += " AND m.priority = ?"
         params.append(priority)
     if status:
-        query += " AND status = ?"
+        query += " AND m.status = ?"
         params.append(status)
     if search:
-        query += " AND action_description LIKE ?"
+        query += " AND m.action_description LIKE ?"
         params.append(f"%{search}%")
-    query += " ORDER BY created_at DESC"
+    query += " ORDER BY m.created_at DESC"
     return db.fetch_all(query, tuple(params))
 
 
@@ -559,11 +240,20 @@ def get_map_detail(map_id: str):
             (map_row["regulation_id"],),
         )
 
+    # Latest contradiction involving this MAP (so the page can explain why it is on hold)
+    conflict = db.fetch_one(
+        """SELECT * FROM conflicts
+           WHERE conflict_type = 'B' AND (map_id_1 = ? OR map_id_2 = ?)
+           ORDER BY created_at DESC LIMIT 1""",
+        (map_id, map_id),
+    )
+
     return {
         "map": map_row,
         "evidence_history": evidence,
         "siblings": siblings,
         "regulation": regulation,
+        "conflict": conflict,
     }
 
 
@@ -595,7 +285,8 @@ async def submit_evidence(
 
             # Handle file upload
             evidence_file = form_data.get("evidence_file")
-            if evidence_file and hasattr(evidence_file, 'read'):
+            # Browsers send an empty file part when no file is chosen; skip it
+            if evidence_file and hasattr(evidence_file, 'read') and getattr(evidence_file, 'filename', ''):
                 try:
                     import uuid as _uuid
                     evidence_dir = Path("./data/evidence")
@@ -649,11 +340,21 @@ def list_conflicts(resolution: str = Query(None)):
         SELECT c.*,
                m1.action_description as map_1_action,
                m1.department as map_1_dept,
+               m1.status as map_1_status,
+               m1.deadline_date as map_1_deadline,
+               r1.title as map_1_regulation,
+               r1.source as map_1_source,
                m2.action_description as map_2_action,
-               m2.department as map_2_dept
+               m2.department as map_2_dept,
+               m2.status as map_2_status,
+               m2.deadline_date as map_2_deadline,
+               r2.title as map_2_regulation,
+               r2.source as map_2_source
         FROM conflicts c
         JOIN maps m1 ON c.map_id_1 = m1.id
         JOIN maps m2 ON c.map_id_2 = m2.id
+        LEFT JOIN regulations r1 ON r1.id = m1.regulation_id
+        LEFT JOIN regulations r2 ON r2.id = m2.regulation_id
         WHERE 1=1
     """
     params = []
@@ -708,6 +409,15 @@ def resolve_conflict(conflict_id: str):
     affected_map_ids = [conflict["map_id_1"], conflict["map_id_2"]]
     if conflict["conflict_type"] == "B":
         for mid in affected_map_ids:
+            # The router re-assigns departments after legal review, so the department
+            # copies made before the conflict are archived instead of duplicated
+            db.execute(
+                """UPDATE maps
+                   SET status = 'superseded',
+                       conflict_detail = 'Department copy replaced when the action was re-routed after legal review'
+                   WHERE parent_map_id = ? AND status = 'conflict'""",
+                (mid,),
+            )
             db.execute(
                 """UPDATE maps
                    SET status = 'pending',
@@ -717,7 +427,10 @@ def resolve_conflict(conflict_id: str):
                    WHERE id = ?""",
                 (mid,),
             )
-        router_summary = run_router(map_ids=affected_map_ids)
+        # The router worker picks the actions up; routing here as well could
+        # race with it and create duplicate department copies
+        workers.wake("router")
+        router_summary = "queued"
     else:
         router_summary = None
         for mid in affected_map_ids:
@@ -835,60 +548,33 @@ def get_risk_report():
 # =====================================================================
 # PIPELINE TRIGGER
 # =====================================================================
-import threading
-
-_pipeline_status = {"running": False, "last_result": None, "last_error": None}
-
-def _run_pipeline_background():
-    """Run ingestion and compliance chain in background thread for 10 minutes."""
-    import time
-    start_time = time.time()
-    end_time = start_time + (10 * 60)  # 10 minutes
-
-    try:
-        while time.time() < end_time:
-            logger.info("Running pipeline chain (time remaining: %.1f mins)", (end_time - time.time()) / 60.0)
-            run_ingestion_chain()
-            
-            # Sleep briefly before next ingestion check to avoid IMAP spam
-            # We break early if we exceed the 10 minute mark during sleep
-            for _ in range(30):
-                if time.time() >= end_time:
-                    break
-                time.sleep(1)
-                
-        _pipeline_status["last_result"] = {
-            "status": "completed",
-            "message": "Ingestion and compliance pipeline chain finished successfully after 10 minutes."
-        }
-        _pipeline_status["last_error"] = None
-        logger.info("Background pipeline chain completed successfully")
-    except Exception as exc:
-        logger.error("Background pipeline chain failed: %s", exc)
-        _pipeline_status["last_result"] = None
-        _pipeline_status["last_error"] = str(exc)
-    finally:
-        _pipeline_status["running"] = False
+def _trigger_ingestion_now() -> dict:
+    """Run an ingestion pass now; the other workers are always running and pick up its output."""
+    if workers.is_busy("ingestion"):
+        return {"status": "already_running", "message": "Ingestion is already running"}
+    workers.wake("ingestion")
+    return {"status": "started", "message": "Ingestion started; all pipeline workers are running concurrently"}
 
 
 @app.post("/api/pipeline/trigger")
 def trigger_pipeline():
-    """Trigger the ingestion and compliance chain in background."""
-    if _pipeline_status["running"]:
-        return {"status": "already_running", "message": "Pipeline is already running in background"}
-
-    _pipeline_status["running"] = True
-    _pipeline_status["last_result"] = None
-    _pipeline_status["last_error"] = None
-    thread = threading.Thread(target=_run_pipeline_background, daemon=True)
-    thread.start()
-    return {"status": "started", "message": "Pipeline chain started in background"}
+    """Trigger an ingestion pass now."""
+    return _trigger_ingestion_now()
 
 
 @app.get("/api/pipeline/status")
 def get_pipeline_status():
-    """Check pipeline execution status."""
-    return _pipeline_status
+    """Live state of every pipeline worker plus queue depths.
+    `running` / `last_error` describe the ingestion worker (used by the dashboard's Run Pipeline button)."""
+    status = workers.worker_status()
+    ingestion = status.get("ingestion", {})
+    return {
+        "running": ingestion.get("state") == "busy",
+        "last_result": {"finished": ingestion.get("last_finished")},
+        "last_error": ingestion.get("last_error"),
+        "workers": status,
+        "queues": workers.queue_depths(),
+    }
 
 
 # =====================================================================
@@ -896,16 +582,8 @@ def get_pipeline_status():
 # =====================================================================
 @app.post("/api/ingestion/trigger")
 def trigger_ingestion():
-    """Manually trigger the ingestion and compliance chain in background."""
-    if _pipeline_status["running"]:
-        return {"status": "already_running", "message": "Pipeline/ingestion is already running in background"}
-
-    _pipeline_status["running"] = True
-    _pipeline_status["last_result"] = None
-    _pipeline_status["last_error"] = None
-    thread = threading.Thread(target=_run_pipeline_background, daemon=True)
-    thread.start()
-    return {"status": "started", "message": "Ingestion and compliance chain started in background"}
+    """Manually trigger an ingestion pass now."""
+    return _trigger_ingestion_now()
 
 
 if __name__ == "__main__":

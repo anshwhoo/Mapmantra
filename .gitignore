@@ -9,3 +9,5 @@ data/
 !README.md
 scratch_*.py
 .env
+.venv/
+demo/
