@@ -40,17 +40,7 @@ def get_connection() -> sqlite3.Connection:
     return _conn
 
 
-def _drop_source_check(conn: sqlite3.Connection):
-    """Older databases only allowed RBI/SEBI/IRDAI as a regulation's source. SQLite cannot
-    change a CHECK in place, so rebuild the table without it (the app validates sources)."""
-    row = conn.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'regulations'").fetchone()
-    if not row or "CHECK(source IN" not in row["sql"]:
-        return
-    conn.execute("PRAGMA foreign_keys=OFF")
-    try:
-        conn.executescript("""
-        BEGIN;
-        CREATE TABLE regulations_new (
+REGULATIONS_COLUMNS = """
             id TEXT PRIMARY KEY,
             title TEXT,
             source TEXT,
@@ -58,10 +48,31 @@ def _drop_source_check(conn: sqlite3.Connection):
             raw_text TEXT,
             doc_hash TEXT UNIQUE,
             ingested_at TEXT,
-            status TEXT DEFAULT 'new' CHECK(status IN ('new','processing','processed','resolved'))
+            status TEXT DEFAULT 'new' CHECK(status IN ('new','processing','processed','resolved','not_applicable')),
+            applicability TEXT,
+            applicability_method TEXT,
+            applicability_reason TEXT,
+            applicability_audience TEXT,
+            screened_at TEXT"""
+
+
+def _rebuild_regulations(conn: sqlite3.Connection):
+    """Older databases only allowed RBI/SEBI/IRDAI as a regulation's source and had no
+    'not_applicable' status. SQLite cannot change a CHECK in place, so rebuild the table
+    with the current definition and copy every row across (the app validates sources)."""
+    row = conn.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'regulations'").fetchone()
+    if not row or ("CHECK(source IN" not in row["sql"] and "'not_applicable'" in row["sql"]):
+        return
+    old_columns = {r["name"] for r in conn.execute("PRAGMA table_info(regulations)")}
+    new_columns = [line.split()[0] for line in REGULATIONS_COLUMNS.strip().splitlines()]
+    copied = ", ".join(c for c in new_columns if c in old_columns)
+    conn.execute("PRAGMA foreign_keys=OFF")
+    try:
+        conn.executescript(f"""
+        BEGIN;
+        CREATE TABLE regulations_new ({REGULATIONS_COLUMNS}
         );
-        INSERT INTO regulations_new (id, title, source, url, raw_text, doc_hash, ingested_at, status)
-            SELECT id, title, source, url, raw_text, doc_hash, ingested_at, status FROM regulations;
+        INSERT INTO regulations_new ({copied}) SELECT {copied} FROM regulations;
         DROP TABLE regulations;
         ALTER TABLE regulations_new RENAME TO regulations;
         CREATE INDEX IF NOT EXISTS idx_regulations_status ON regulations(status);
@@ -75,17 +86,15 @@ def init_db():
     """Create all tables if they do not exist."""
     conn = get_connection()
     with _lock:
-        _drop_source_check(conn)
-        conn.executescript("""
-        CREATE TABLE IF NOT EXISTS regulations (
-            id TEXT PRIMARY KEY,
-            title TEXT,
-            source TEXT,
-            url TEXT,
-            raw_text TEXT,
-            doc_hash TEXT UNIQUE,
-            ingested_at TEXT,
-            status TEXT DEFAULT 'new' CHECK(status IN ('new','processing','processed','resolved'))
+        _rebuild_regulations(conn)
+        conn.executescript(f"""
+        CREATE TABLE IF NOT EXISTS regulations ({REGULATIONS_COLUMNS}
+        );
+
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT,
+            updated_at TEXT
         );
 
         CREATE TABLE IF NOT EXISTS maps (

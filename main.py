@@ -19,6 +19,7 @@ from agents.ingestion import ingest_manual_upload
 from agents.validator import validate_evidence
 from agents.risk_score import compute_risk_scores
 from agents.regulators import REGULATORS, REGULATOR_CODES
+from agents import bank_profile
 from agents.conflict import index_map
 from agents import workers
 
@@ -130,7 +131,11 @@ def list_regulations(
     search: str = Query(None, description="Search in title"),
 ):
     """List all regulations with optional filters."""
-    query = "SELECT id, title, source, url, doc_hash, ingested_at, status FROM regulations WHERE 1=1"
+    query = """SELECT id, title, source, url, doc_hash, ingested_at, status, applicability,
+                      applicability_method, applicability_reason, applicability_audience, screened_at,
+                      (SELECT COUNT(*) FROM maps m WHERE m.regulation_id = regulations.id
+                       AND m.parent_map_id IS NULL) AS map_count
+               FROM regulations WHERE 1=1"""
     params = []
     if source:
         query += " AND source = ?"
@@ -190,6 +195,84 @@ def list_regulators():
     """Regulators and standards a circular or document can come from."""
     return [{k: r[k] for k in ("code", "name", "kind")} | {"penalty_configured": bool(r["penalty"])}
             for r in REGULATORS]
+
+
+# =====================================================================
+# BANK PROFILE & APPLICABILITY (ingestion filter)
+# =====================================================================
+class BankProfileUpdate(BaseModel):
+    name: str = ""
+    bank_type: str
+    activities: list[str] = []
+
+
+class ApplicabilityOverride(BaseModel):
+    applicable: bool
+    note: str = ""
+
+
+@app.get("/api/bank-profile")
+def get_bank_profile():
+    """The bank profile the ingestion filter screens circulars against, plus the choices."""
+    return {"profile": bank_profile.get_profile(), "bank_types": bank_profile.BANK_TYPES,
+            "activities": bank_profile.ACTIVITIES}
+
+
+@app.put("/api/bank-profile")
+def update_bank_profile(body: BankProfileUpdate):
+    """Save the bank profile and re-check every circular that has not been processed yet
+    (circulars Compliance decided by hand keep their decision)."""
+    try:
+        profile = bank_profile.save_profile(body.name, body.bank_type, body.activities)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    not_overridden = "(applicability_method IS NULL OR applicability_method != 'override')"
+    to_recheck = db.fetch_one(
+        f"SELECT COUNT(*) AS c FROM regulations WHERE status IN ('new', 'not_applicable') AND {not_overridden}"
+    )["c"]
+    db.execute(
+        f"""UPDATE regulations SET status = 'new', screened_at = NULL
+            WHERE status IN ('new', 'not_applicable') AND {not_overridden}"""
+    )
+    db.insert_audit_entry(
+        agent="ingestion",
+        action="bank profile updated",
+        detail={**profile, "circulars_to_recheck": to_recheck},
+    )
+    workers.wake("extractor")
+    return {"profile": profile, "circulars_to_recheck": to_recheck}
+
+
+@app.post("/api/regulations/{regulation_id}/applicability")
+def override_applicability(regulation_id: str, body: ApplicabilityOverride):
+    """Compliance overrides the filter: process a circular it skipped, or skip one it kept."""
+    reg = db.fetch_one("SELECT id, status, applicability FROM regulations WHERE id = ?", (regulation_id,))
+    if not reg:
+        raise HTTPException(status_code=404, detail="Regulation not found")
+    if reg["status"] not in ("new", "not_applicable"):
+        raise HTTPException(status_code=409, detail="Actions were already created from this circular, "
+                                                    "so it can no longer be marked as applicable or not.")
+    reason = body.note.strip() or ("Marked as applicable by the compliance team." if body.applicable
+                                   else "Marked as not applicable by the compliance team.")
+    db.execute(
+        """UPDATE regulations SET status = ?, applicability = ?, applicability_method = 'override',
+               applicability_reason = ?, screened_at = ? WHERE id = ?""",
+        ("new" if body.applicable else "not_applicable",
+         "applicable" if body.applicable else "not_applicable", reason, db.now_iso(), regulation_id),
+    )
+    db.insert_audit_entry(
+        agent="ingestion",
+        action="applicability overridden",
+        detail={"from": reg["applicability"], "applicable": body.applicable, "note": body.note},
+        regulation_id=regulation_id,
+    )
+    if body.applicable:
+        workers.prioritize_regulation(regulation_id)
+    return db.fetch_one(
+        """SELECT id, status, applicability, applicability_method, applicability_reason
+           FROM regulations WHERE id = ?""",
+        (regulation_id,),
+    )
 
 
 # =====================================================================

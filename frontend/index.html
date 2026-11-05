@@ -438,7 +438,7 @@ const riskColor = s => s >= 60 ? 'var(--red)' : s >= 30 ? 'var(--amber)' : 'var(
 const riskLevel = s => s >= 60 ? 'high' : s >= 30 ? 'medium' : 'low';
 const statusColor = s => ({completed:'var(--green)',pass:'var(--green)',satisfied:'var(--green)',assigned:'var(--blue)',
   in_progress:'var(--blue)',pending:'var(--text-3)',partial:'var(--amber)',overdue:'var(--red)',failed:'var(--red)',
-  fail:'var(--red)',conflict:'var(--red)',superseded:'var(--text-4)'}[s] || 'var(--text-3)');
+  fail:'var(--red)',conflict:'var(--red)',superseded:'var(--text-4)',not_applicable:'var(--text-4)'}[s] || 'var(--text-3)');
 const priorityColor = p => ({high:'var(--red)',medium:'var(--amber)',low:'var(--green)'}[p] || 'var(--text-3)');
 const agentColor = a => ({ingestion:'var(--cyan)',extractor:'var(--purple)',router:'#14b8a6',validator:'var(--amber)',
   supervisor:'var(--text-3)',conflict_detector:'var(--red)',threat_mapper:'var(--purple)',risk_engine:'var(--green)'}[a] || 'var(--text-3)');
@@ -733,9 +733,91 @@ function DashboardScreen({ dashboard, navigate }) {
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // INBOX SCREEN
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ── Bank profile: which circulars the ingestion filter keeps ────────────────
+const fieldStyle = {width:'100%',background:'rgba(255,255,255,0.04)',border:'1px solid var(--glass-border)',borderRadius:'var(--radius-sm)',padding:'8px 12px',color:'var(--text-1)',fontSize:13};
+
+function BankProfileCard({ onSaved }) {
+  const { data, refetch } = useApi('/api/bank-profile');
+  const [form, setForm] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState(null);
+  if (!data) return null;
+  const { profile, bank_types, activities } = data;
+  const typeName = code => (bank_types.find(t => t.code === code) || {}).name || code;
+  const toggle = code => setForm(f => ({ ...f, activities: f.activities.includes(code)
+    ? f.activities.filter(a => a !== code) : [...f.activities, code] }));
+  const save = async () => {
+    setSaving(true);
+    const res = await api('/api/bank-profile', { method: 'PUT', body: JSON.stringify(form) });
+    setSaving(false);
+    if (!res) { setMessage('Could not save the bank profile. Please try again.'); return; }
+    setForm(null);
+    setMessage(`Saved. ${plural(res.circulars_to_recheck, 'circular')} not yet processed will be checked again for this bank.`);
+    refetch();
+    onSaved && onSaved();
+  };
+
+  return (
+    <GlassCard className="mb-4" style={{ padding: '16px 20px' }}>
+      {!form ? (
+        <div className="flex justify-between items-center gap-3">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="text-xs" style={{ color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 1 }}>Circulars are filtered for</div>
+            <div className="font-bold mt-1">{profile.name}{DOT}{typeName(profile.bank_type)}</div>
+            <div className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>
+              {activities.filter(a => profile.activities.includes(a.code)).map(a => a.name).join(DOT) || 'No other banking activities selected'}
+            </div>
+          </div>
+          <button className="btn btn-outline" onClick={() => { setForm({ ...profile, activities: [...profile.activities] }); setMessage(null); }}>
+            Edit bank profile
+          </button>
+        </div>
+      ) : (
+        <div>
+          <div className="section-title">Bank profile</div>
+          <div className="text-xs mb-4" style={{ color: 'var(--text-3)' }}>
+            The ingestion agent only sends circulars meant for this kind of bank on to the other agents.
+            Circulars for other bank types (for example only urban co-operative banks or only NBFCs) are set aside as "Not applicable".
+          </div>
+          <div className="grid-2 gap-3">
+            <div>
+              <label className="text-xs" style={{ color: 'var(--text-3)', display: 'block', marginBottom: 6 }}>Bank name</label>
+              <input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={fieldStyle} />
+            </div>
+            <div>
+              <label className="text-xs" style={{ color: 'var(--text-3)', display: 'block', marginBottom: 6 }}>Type of Indian bank</label>
+              <select className="input select" value={form.bank_type} onChange={e => setForm({ ...form, bank_type: e.target.value })} style={fieldStyle}>
+                {bank_types.map(t => <option key={t.code} value={t.code}>{t.name} (e.g. {t.examples})</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="text-xs mt-4 mb-2" style={{ color: 'var(--text-3)' }}>What the bank does</div>
+          <div className="grid-2 gap-2">
+            {activities.map(a => (
+              <label key={a.code} className="text-sm" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input type="checkbox" checked={form.activities.includes(a.code)} onChange={() => toggle(a.code)} />
+                {a.name}
+              </label>
+            ))}
+          </div>
+          <div className="flex gap-2 mt-4">
+            <button className="btn btn-primary" onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save and re-check circulars'}</button>
+            <button className="btn btn-outline" onClick={() => setForm(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {message && <div className="text-xs mt-2" style={{ color: message.startsWith('Saved') ? 'var(--green)' : 'var(--red)' }}>{message}</div>}
+    </GlassCard>
+  );
+}
+
+const DECIDED_BY = { rules: 'decided by rules', ai: 'decided by AI', default: 'kept to be safe', override: 'decided by Compliance' };
+
 function InboxScreen({ navigate }) {
   const { data: regs, loading, refetch } = usePolling('/api/regulations', 30000);
   const { data: regulators } = useApi('/api/regulators');
+  const [tab, setTab] = useState('applies');
+  const [overriding, setOverriding] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [triggeringPipeline, setTriggeringPipeline] = useState(false);
@@ -762,6 +844,16 @@ function InboxScreen({ navigate }) {
     setUploading(false);
     refetch();
   };
+
+  const overrideApplicability = async (r, applicable) => {
+    setOverriding(r.id);
+    await api(`/api/regulations/${r.id}/applicability`, { method: 'POST', body: JSON.stringify({ applicable }) });
+    setOverriding(null);
+    refetch();
+  };
+  const allRegs = regs || [];
+  const notApplicable = allRegs.filter(r => r.status === 'not_applicable');
+  const shownRegs = tab === 'skipped' ? notApplicable : allRegs.filter(r => r.status !== 'not_applicable');
 
   const triggerPipeline = async () => {
     setTriggeringPipeline(true);
@@ -883,23 +975,56 @@ function InboxScreen({ navigate }) {
         </GlassCard>
       )}
 
+      <BankProfileCard onSaved={refetch} />
+
+      <div className="flex gap-2 mb-4">
+        <button className={`btn ${tab === 'applies' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setTab('applies')}>
+          For this bank ({allRegs.length - notApplicable.length})
+        </button>
+        <button className={`btn ${tab === 'skipped' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setTab('skipped')}>
+          Not applicable ({notApplicable.length})
+        </button>
+      </div>
+
       {loading && !regs ? <div className="flex items-center gap-2"><div className="spinner" /> Loading...</div> : (
         <div>
-          {(regs || []).map(r => (
-            <GlassCard key={r.id} className="mb-2" style={{ padding: '16px 20px' }}>
-              <div className="flex justify-between items-center">
+          {shownRegs.map(r => (
+            <GlassCard key={r.id} className="mb-2" style={{ padding: '16px 20px', opacity: r.status === 'not_applicable' ? 0.85 : 1 }}>
+              <div className="flex justify-between items-center gap-3">
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="flex gap-2 items-center mb-1">
                     <Badge label={r.source || 'Manual'} color="var(--cyan)" />
-                    <Badge label={r.status} color={statusColor(r.status)} />
+                    <Badge label={r.status.replace('_', ' ')} color={statusColor(r.status)} />
                   </div>
                   <div className="font-bold truncate">{r.title}</div>
-                  <div className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>Ingested {timeAgo(r.ingested_at)} / {r.map_count || 0} MAPs extracted</div>
+                  <div className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>
+                    Ingested {timeAgo(r.ingested_at)}{r.status !== 'not_applicable' && ` / ${r.map_count || 0} MAPs extracted`}
+                  </div>
+                  {r.applicability_reason ? (
+                    <div className="text-xs mt-2" style={{ color: r.status === 'not_applicable' ? 'var(--amber)' : 'var(--green)' }}>
+                      {r.status === 'not_applicable' ? 'Not for this bank: ' : 'Applies: '}{r.applicability_reason}
+                      <span style={{ color: 'var(--text-4)' }}>{DOT}{DECIDED_BY[r.applicability_method] || ''}</span>
+                    </div>
+                  ) : r.status === 'new' && (
+                    <div className="text-xs mt-2" style={{ color: 'var(--text-3)' }}>Waiting for the applicability check...</div>
+                  )}
                 </div>
+                {r.status === 'not_applicable' && (
+                  <button className="btn btn-outline" disabled={overriding === r.id} onClick={() => overrideApplicability(r, true)}>
+                    {overriding === r.id ? 'Sending...' : 'Process anyway'}
+                  </button>
+                )}
+                {r.status === 'new' && (
+                  <button className="btn btn-outline" disabled={overriding === r.id} onClick={() => overrideApplicability(r, false)}>
+                    {overriding === r.id ? 'Saving...' : 'Not for us'}
+                  </button>
+                )}
               </div>
             </GlassCard>
           ))}
-          {(!regs || regs.length === 0) && <div className="text-sm" style={{ color: 'var(--text-3)', textAlign: 'center', padding: 40 }}>No regulations ingested yet. Upload a circular or run the pipeline.</div>}
+          {shownRegs.length === 0 && <div className="text-sm" style={{ color: 'var(--text-3)', textAlign: 'center', padding: 40 }}>
+            {tab === 'skipped' ? 'No circulars have been set aside as not applicable.' : 'No regulations ingested yet. Upload a circular or run the pipeline.'}
+          </div>}
         </div>
       )}
     </div>

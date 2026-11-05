@@ -18,6 +18,8 @@ each contradicts a rule in the sample, so Legal must decide which rule the bank
 follows (the seeded HSM vs cloud KMS contradiction is a third). Overlaps and
 outdated rules are handled automatically and can be undone. Evidence files to
 submit are generated in demo/evidence_files/ with today's date.
+demo/ucb_circular.pdf is addressed only to urban co-operative banks: the ingestion
+filter marks it "Not applicable" for the demo bank (an ICICI-style private bank).
 """
 
 import os
@@ -70,6 +72,21 @@ CONFLICT_CIRCULAR_2 = [
     "1. The Cyber Crisis Management Plan (CCMP) shall be approved by the IT Strategy",
     "   Committee only. It shall not be placed before the full Board of Directors for",
     "   approval.",
+    "Chief General Manager",
+]
+
+# Addressed only to urban co-operative banks: the ingestion filter sets it aside as
+# "Not applicable" for the demo bank (a private sector bank) without extracting any actions
+UCB_CIRCULAR = [
+    "RESERVE BANK OF INDIA - SAMPLE CIRCULAR (MapMantra demo)",
+    "RBI/DEMO/2026-27  DoR.CO.UCB.DEMO/12.05.001/2026-27",
+    "The Chief Executive Officer",
+    "All Primary (Urban) Co-operative Banks",
+    "Madam / Dear Sir,",
+    "Subject: Board of Management - Constitution and Cyber Security Oversight",
+    "1. Every urban co-operative bank shall constitute a Board of Management within 90 days",
+    "   and include at least one member with experience in information technology.",
+    "2. The Board of Management shall review the bank's cyber security posture every quarter.",
     "Chief General Manager",
 ]
 
@@ -162,6 +179,7 @@ def main():
     _write_pdf(DEMO / "sample_circular.pdf", SAMPLE_CIRCULAR)
     _write_pdf(DEMO / "conflict_circular.pdf", CONFLICT_CIRCULAR)
     _write_pdf(DEMO / "conflict_circular_2.pdf", CONFLICT_CIRCULAR_2)
+    _write_pdf(DEMO / "ucb_circular.pdf", UCB_CIRCULAR)
     evidence_dir = DEMO / "evidence_files"
     evidence_dir.mkdir(exist_ok=True)
     for name, lines in _evidence_files(date.today()).items():
@@ -177,6 +195,7 @@ def main():
     print(f"Demo running at http://localhost:8001 (model {os.environ['OLLAMA_MODEL']})")
     print(f"Upload {DEMO / 'sample_circular.pdf'} from the Regulation Inbox to watch the agents,")
     print(f"then {DEMO / 'conflict_circular.pdf'} and {DEMO / 'conflict_circular_2.pdf'} for contradictions.")
+    print(f"Upload {DEMO / 'ucb_circular.pdf'} to see the filter set aside a circular meant for other banks.")
     print(f"Evidence files to submit: {evidence_dir}")
 
     import uvicorn
