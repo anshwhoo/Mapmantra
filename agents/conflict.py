@@ -2,11 +2,14 @@
 Agent 4 — Conflict Detector
 Uses ChatOllama + OllamaEmbeddings + ChromaDB to find regulatory conflicts.
 Types: A (superseded), B (contradiction), C (overlap/merge), none.
+Supersede and overlap are applied automatically (staff can undo them);
+contradictions hold both MAPs until Legal decides.
 """
 
 import json
 import logging
 import re
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from langchain_ollama import OllamaEmbeddings
@@ -60,6 +63,25 @@ def _embed_text(text: str, embeddings: OllamaEmbeddings) -> list[float]:
     return embeddings.embed_query(text)
 
 
+def index_map(map_id: str):
+    """Add or refresh one MAP in the similarity index, so later circulars are compared against it.
+    Used for MAPs that Legal sends back to departments after resolving a contradiction."""
+    map_row = db.fetch_one("SELECT * FROM maps WHERE id = ?", (map_id,))
+    if not map_row or map_row["status"] in ("superseded", "conflict"):
+        return
+    collection, embeddings = _get_chroma_collection()
+    collection.upsert(
+        ids=[map_id],
+        documents=[map_row["action_description"]],
+        metadatas=[{
+            "map_id": map_id,
+            "regulation_id": map_row["regulation_id"] or "",
+            "department": map_row["department"] or "",
+        }],
+        embeddings=[_embed_text(map_row["action_description"], embeddings)],
+    )
+
+
 def _parse_conflict_response(raw: str) -> dict:
     """Parse conflict classification from LLM output."""
     cleaned = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL)
@@ -80,6 +102,48 @@ def _parse_conflict_response(raw: str) -> dict:
             pass
 
     return {}
+
+
+def _propose_merge(llm, existing_text: str, new_text: str, map_row: dict) -> dict | None:
+    """Ask the model for one combined action covering two overlapping ones.
+    Returned as a proposal for Legal; nothing is created until Legal accepts it."""
+    merge_resp = llm.invoke([
+        SystemMessage(content=MERGE_PROMPT),
+        HumanMessage(content=f"Action 1: {existing_text}\n\nAction 2: {new_text}"),
+    ])
+    merged = _parse_conflict_response(merge_resp.content)
+    if not merged or "action_description" not in merged:
+        return None
+
+    # Clean and validate department to prevent CHECK constraint failures
+    dept = str(merged.get("department", "")).strip()
+    valid_depts = {"IT", "Compliance", "Legal", "HR", "Risk", "Operations"}
+    if dept not in valid_depts:
+        dept = next((d for d in valid_depts if d.lower() in dept.lower() or dept.lower() in d.lower()),
+                    map_row["department"])
+
+    # Clean and validate priority
+    priority = str(merged.get("priority", "")).strip().lower()
+    if priority not in {"high", "medium", "low"}:
+        priority = next((p for p in ("high", "medium", "low") if p[:3] in priority), map_row["priority"])
+
+    # Clean and validate deadline_days
+    try:
+        deadline_days = int(str(merged.get("deadline_days", map_row["deadline_days"])).strip())
+        if deadline_days <= 0:
+            deadline_days = 90
+    except Exception:
+        deadline_days = map_row["deadline_days"] or 90
+
+    return {
+        "action_description": str(merged["action_description"]),
+        "department": dept,
+        "priority": priority,
+        "deadline_days": deadline_days,
+        "compliance_metric": merged.get("compliance_metric", map_row["compliance_metric"]),
+        "verification_method": merged.get("verification_method", map_row["verification_method"]),
+        "regulation_id": map_row["regulation_id"],
+    }
 
 
 def run_conflict_detector(map_ids: list = None) -> dict:
@@ -161,11 +225,14 @@ def run_conflict_detector(map_ids: list = None) -> dict:
                     if existing_regulation_id == map_row["regulation_id"]:
                         continue
 
-                    # Skip index entries whose MAP has since been archived or disputed,
-                    # otherwise the same old MAP gets merged again and again
+                    # Archived MAPs leave the index for good, otherwise the same old MAP gets
+                    # merged again and again. MAPs on hold for Legal are skipped but stay
+                    # indexed: they come back once Legal decides.
                     existing = db.fetch_one("SELECT status FROM maps WHERE id = ?", (existing_map_id,))
-                    if not existing or existing["status"] in ("superseded", "conflict"):
+                    if not existing or existing["status"] == "superseded":
                         collection.delete(ids=[existing_map_id])
+                        continue
+                    if existing["status"] == "conflict":
                         continue
 
                     # Ask LLM to classify the conflict
@@ -183,29 +250,37 @@ def run_conflict_detector(map_ids: list = None) -> dict:
                     explanation = classification.get("explanation", "")
                     recommendation = classification.get("recommendation", "")
 
+                    description = f"{explanation} | {recommendation}" if recommendation else explanation
+
                     if conflict_type == "A":
-                        # MAP B supersedes MAP A — archive old MAP
+                        # MAP B supersedes MAP A: archive the old MAP and its department copies
+                        # automatically (completed ones keep their status). Staff can undo it.
                         db.execute(
                             "UPDATE maps SET status = 'superseded', conflict_flag = 1, "
-                            "conflict_type = 'A', conflict_detail = ? WHERE id = ? OR parent_map_id = ?",
+                            "conflict_type = 'A', conflict_detail = ? "
+                            "WHERE (id = ? OR parent_map_id = ?) AND status != 'completed'",
                             (explanation, existing_map_id, existing_map_id),
                         )
                         collection.delete(ids=[existing_map_id])
+                        conflict_id = db.new_id()
+                        db.execute(
+                            """INSERT INTO conflicts
+                               (id, map_id_1, map_id_2, conflict_type, description,
+                                resolution, resolved_at, created_at)
+                               VALUES (?,?,?,?,?,?,?,?)""",
+                            (conflict_id, existing_map_id, map_id, "A", description,
+                             "auto_resolved", db.now_iso(), db.now_iso()),
+                        )
                         db.insert_audit_entry(
                             agent="conflict_detector",
                             action="MAP superseded",
-                            detail={
-                                "old_map": existing_map_id,
-                                "new_map": map_id,
-                                "explanation": explanation,
-                            },
+                            detail={"old_map": existing_map_id, "new_map": map_id, "explanation": explanation},
                             map_id=existing_map_id,
                         )
                         conflicts_found += 1
 
                     elif conflict_type == "B":
-                        # Direct contradiction — hold both MAPs and their department siblings
-                        # (completed copies keep their status)
+                        # Contradiction: hold both MAPs and their department copies for Legal
                         for held_id in (map_id, existing_map_id):
                             db.execute(
                                 "UPDATE maps SET status = 'conflict', conflict_flag = 1, "
@@ -213,129 +288,61 @@ def run_conflict_detector(map_ids: list = None) -> dict:
                                 "WHERE (id = ? OR parent_map_id = ?) AND status != 'completed'",
                                 (explanation, held_id, held_id),
                             )
-                        # Write to conflicts table
-                        conflict_id = db.new_id()
                         db.execute(
                             """INSERT INTO conflicts
-                               (id, map_id_1, map_id_2, conflict_type, description,
-                                resolution, created_at)
+                               (id, map_id_1, map_id_2, conflict_type, description, resolution, created_at)
                                VALUES (?,?,?,?,?,?,?)""",
-                            (
-                                conflict_id, existing_map_id, map_id, "B",
-                                f"{explanation} | {recommendation}",
-                                "pending_legal", db.now_iso(),
-                            ),
+                            (db.new_id(), existing_map_id, map_id, "B", description, "pending_legal", db.now_iso()),
                         )
                         db.insert_audit_entry(
                             agent="conflict_detector",
                             action="contradiction detected",
-                            detail={
-                                "map_1": existing_map_id,
-                                "map_2": map_id,
-                                "explanation": explanation,
-                            },
+                            detail={"map_1": existing_map_id, "map_2": map_id, "explanation": explanation},
                             map_id=map_id,
                         )
                         conflicts_found += 1
 
                     elif conflict_type == "C":
-                        # Overlap — merge into one unified MAP
-                        merge_text = (
-                            f"Action 1: {doc}\n\nAction 2: {action_desc}"
-                        )
-                        merge_resp = llm.invoke([
-                            SystemMessage(content=MERGE_PROMPT),
-                            HumanMessage(content=merge_text),
-                        ])
-                        merged = _parse_conflict_response(merge_resp.content)
-
-                        if merged and "action_description" in merged:
+                        # Overlap: merge into one combined MAP automatically and archive both
+                        # originals with their department copies. Staff can undo it.
+                        proposal = _propose_merge(llm, doc, action_desc, map_row)
+                        if proposal:
                             merged_id = db.new_id()
                             now = db.now_iso()
-                            
-                            # Clean and validate department to prevent CHECK constraint failures
-                            dept = str(merged.get("department", "")).strip()
-                            valid_depts = {"IT", "Compliance", "Legal", "HR", "Risk", "Operations"}
-                            if dept not in valid_depts:
-                                matched_dept = None
-                                for valid_d in valid_depts:
-                                    if valid_d.lower() in dept.lower() or dept.lower() in valid_d.lower():
-                                        matched_dept = valid_d
-                                        break
-                                dept = matched_dept or map_row["department"]
-
-                            # Clean and validate priority
-                            priority = str(merged.get("priority", "")).strip().lower()
-                            if priority not in {"high", "medium", "low"}:
-                                if "high" in priority:
-                                    priority = "high"
-                                elif "med" in priority:
-                                    priority = "medium"
-                                elif "low" in priority:
-                                    priority = "low"
-                                else:
-                                    priority = map_row["priority"]
-
-                            # Clean and validate deadline_days
-                            deadline_days = merged.get("deadline_days", map_row["deadline_days"])
-                            try:
-                                deadline_days = int(str(deadline_days).strip())
-                                if deadline_days <= 0:
-                                    deadline_days = 90
-                            except Exception:
-                                deadline_days = map_row["deadline_days"] or 90
-
-                            from datetime import datetime, timedelta, timezone
-                            deadline_date = (
-                                datetime.now(timezone.utc) + timedelta(days=deadline_days)
-                            ).isoformat()
-
                             db.execute(
                                 """INSERT INTO maps
-                                   (id, regulation_id, action_description, department,
-                                    priority, deadline_days, deadline_date,
-                                    compliance_metric, verification_method,
+                                   (id, regulation_id, action_description, department, priority,
+                                    deadline_days, deadline_date, compliance_metric, verification_method,
                                     status, conflict_detail, created_at)
                                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
                                 (
-                                    merged_id, map_row["regulation_id"],
-                                    merged["action_description"],
-                                    dept, priority, deadline_days, deadline_date,
-                                    merged.get("compliance_metric", map_row["compliance_metric"]),
-                                    merged.get("verification_method", map_row["verification_method"]),
-                                    "pending",
-                                    f"Merged from {existing_map_id} and {map_id}",
-                                    now,
+                                    merged_id, proposal["regulation_id"], proposal["action_description"],
+                                    proposal["department"], proposal["priority"], proposal["deadline_days"],
+                                    (datetime.now(timezone.utc) + timedelta(days=proposal["deadline_days"])).isoformat(),
+                                    proposal["compliance_metric"], proposal["verification_method"],
+                                    "pending", f"Merged from {existing_map_id} and {map_id}", now,
                                 ),
                             )
-                            # Archive both originals together with their department siblings
                             for archived_id in (existing_map_id, map_id):
                                 db.execute(
                                     "UPDATE maps SET status = 'superseded', conflict_flag = 1, "
-                                    "conflict_type = 'C' WHERE id = ? OR parent_map_id = ?",
-                                    (archived_id, archived_id),
+                                    "conflict_type = 'C', conflict_detail = ? "
+                                    "WHERE (id = ? OR parent_map_id = ?) AND status != 'completed'",
+                                    ("Merged automatically into one combined action.", archived_id, archived_id),
                                 )
                             collection.delete(ids=[existing_map_id])
-
-                            # Record in conflicts table
-                            conflict_id = db.new_id()
                             db.execute(
                                 """INSERT INTO conflicts
                                    (id, map_id_1, map_id_2, conflict_type, description,
-                                    resolution, resolved_at, created_at)
-                                   VALUES (?,?,?,?,?,?,?,?)""",
-                                (
-                                    conflict_id, existing_map_id, map_id, "C",
-                                    explanation, "merged", now, now,
-                                ),
+                                    resolution, resolved_at, merged_map_id, created_at)
+                                   VALUES (?,?,?,?,?,?,?,?,?)""",
+                                (db.new_id(), existing_map_id, map_id, "C", description,
+                                 "merged", now, merged_id, now),
                             )
                             db.insert_audit_entry(
                                 agent="conflict_detector",
                                 action="MAPs merged",
-                                detail={
-                                    "merged_from": [existing_map_id, map_id],
-                                    "merged_id": merged_id,
-                                },
+                                detail={"merged_from": [existing_map_id, map_id], "merged_id": merged_id},
                                 map_id=merged_id,
                             )
                         conflicts_found += 1

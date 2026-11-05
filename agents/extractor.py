@@ -23,8 +23,9 @@ VALID_PRIORITIES = {"high", "medium", "low"}
 
 SYSTEM_PROMPT = (
     "You are a senior banking compliance expert with 20 years of experience "
-    "reading RBI, SEBI, and IRDAI regulatory circulars in India. Your job is "
-    "to read a regulatory circular and extract every action the bank must take. "
+    "reading regulatory circulars from Indian regulators (RBI, SEBI, IRDAI, CERT-In, NPCI and others) "
+    "and security standards such as ISO 27001 and PCI DSS. Your job is "
+    "to read a circular or standard and extract every action the bank must take. "
     "For each action return a JSON object with exactly these 6 fields: "
     "action_description (specific concrete task), "
     "department (one of: IT/Compliance/Legal/HR/Risk/Operations), "

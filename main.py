@@ -3,8 +3,10 @@ main.py — FastAPI Backend Server
 Hosts all REST endpoints, the concurrent pipeline workers, and CORS setup.
 """
 
+import json
 import logging
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -16,6 +18,8 @@ import db
 from agents.ingestion import ingest_manual_upload
 from agents.validator import validate_evidence
 from agents.risk_score import compute_risk_scores
+from agents.regulators import REGULATORS, REGULATOR_CODES
+from agents.conflict import index_map
 from agents import workers
 
 load_dotenv()
@@ -121,7 +125,7 @@ def get_dashboard():
 # =====================================================================
 @app.get("/api/regulations")
 def list_regulations(
-    source: str = Query(None, description="Filter by source: RBI/SEBI/IRDAI"),
+    source: str = Query(None, description="Filter by source, e.g. RBI, SEBI, CERT-In, ISO 27001"),
     status: str = Query(None, description="Filter by status"),
     search: str = Query(None, description="Search in title"),
 ):
@@ -165,6 +169,8 @@ async def upload_regulation(
     """Manual PDF upload (Option 4). Triggers full pipeline after ingestion."""
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+    if source not in REGULATOR_CODES:
+        raise HTTPException(status_code=400, detail=f"Unknown source '{source}'. Choose one of: {', '.join(REGULATOR_CODES)}")
 
     pdf_bytes = await file.read()
     result = ingest_manual_upload(pdf_bytes, source, title, url)
@@ -177,6 +183,13 @@ async def upload_regulation(
         result["pipeline"] = {"status": "queued", "regulation_id": result["regulation_id"]}
 
     return result
+
+
+@app.get("/api/regulators")
+def list_regulators():
+    """Regulators and standards a circular or document can come from."""
+    return [{k: r[k] for k in ("code", "name", "kind")} | {"penalty_configured": bool(r["penalty"])}
+            for r in REGULATORS]
 
 
 # =====================================================================
@@ -240,10 +253,10 @@ def get_map_detail(map_id: str):
             (map_row["regulation_id"],),
         )
 
-    # Latest contradiction involving this MAP (so the page can explain why it is on hold)
+    # Latest conflict involving this MAP (so the page can explain why it is on hold)
     conflict = db.fetch_one(
         """SELECT * FROM conflicts
-           WHERE conflict_type = 'B' AND (map_id_1 = ? OR map_id_2 = ?)
+           WHERE map_id_1 = ? OR map_id_2 = ?
            ORDER BY created_at DESC LIMIT 1""",
         (map_id, map_id),
     )
@@ -387,28 +400,93 @@ def assign_conflict_to_legal(conflict_id: str):
     return {"status": "assigned", "conflict_id": conflict_id}
 
 
+class ConflictDecision(BaseModel):
+    """Legal's decision on a conflict: which rule the bank follows, or merging an overlap."""
+    decision: str | None = None  # "rule_1", "rule_2", "both" or (overlaps only) "merge"
+    note: str = ""
+
+
+def _set_aside(map_id: str, detail: str, conflict_type: str):
+    """Archive a MAP and its department copies (completed copies keep their status)."""
+    db.execute(
+        """UPDATE maps
+           SET status = 'superseded', conflict_flag = 1, conflict_type = ?, conflict_detail = ?
+           WHERE (id = ? OR parent_map_id = ?) AND status != 'completed'""",
+        (conflict_type, detail, map_id, map_id),
+    )
+
+
 @app.post("/api/conflicts/{conflict_id}/resolve")
 @app.post("/conflicts/{conflict_id}/resolve")
-def resolve_conflict(conflict_id: str):
-    """Mark a conflict as resolved."""
+def resolve_conflict(conflict_id: str, payload: ConflictDecision | None = Body(default=None)):
+    """Resolve a conflict after Legal review. Every conflict type needs a decision:
+    the chosen rule(s) go back to departments, the other is set aside with its copies,
+    or (for an overlap) both are replaced by the proposed combined action."""
     conflict = db.fetch_one("SELECT * FROM conflicts WHERE id = ?", (conflict_id,))
     if not conflict:
         raise HTTPException(status_code=404, detail="Conflict not found")
+    if conflict["resolution"] != "pending_legal":
+        raise HTTPException(status_code=409, detail="This conflict has already been resolved.")
+    if not conflict.get("legal_assigned_at"):
+        raise HTTPException(status_code=409, detail="Assign this conflict to Legal before resolving it.")
 
-    if conflict["conflict_type"] == "B" and not conflict.get("legal_assigned_at"):
+    conflict_type = conflict["conflict_type"]
+    decision = payload.decision if payload else None
+    note = ((payload.note if payload else "") or "").strip()[:2000]
+    allowed = ["rule_1", "rule_2", "both"] + (["merge"] if conflict.get("proposed_merge") else [])
+    if decision not in allowed:
         raise HTTPException(
-            status_code=409,
-            detail="Type B conflicts require legal assignment before resolution.",
+            status_code=422,
+            detail=f"Choose what the bank will do: {', '.join(allowed)}.",
         )
 
     db.execute(
-        "UPDATE conflicts SET resolution = 'resolved', resolved_at = ? WHERE id = ?",
-        (db.now_iso(), conflict_id),
+        """UPDATE conflicts SET resolution = 'resolved', resolved_at = ?,
+                  legal_decision = ?, legal_note = ? WHERE id = ?""",
+        (db.now_iso(), decision, note or None, conflict_id),
     )
 
-    affected_map_ids = [conflict["map_id_1"], conflict["map_id_2"]]
-    if conflict["conflict_type"] == "B":
-        for mid in affected_map_ids:
+    map_1, map_2 = conflict["map_id_1"], conflict["map_id_2"]
+    today = db.now_iso()[:10]
+    reason = f" Reason: {note}" if note else ""
+    merged_id = None
+
+    if decision == "merge":
+        proposal = json.loads(conflict["proposed_merge"])
+        merged_id = db.new_id()
+        deadline_days = int(proposal.get("deadline_days") or 90)
+        db.execute(
+            """INSERT INTO maps
+               (id, regulation_id, action_description, department, priority, deadline_days,
+                deadline_date, compliance_metric, verification_method, status, conflict_detail, created_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                merged_id, proposal.get("regulation_id"), proposal["action_description"],
+                proposal.get("department"), proposal.get("priority"), deadline_days,
+                (datetime.now(timezone.utc) + timedelta(days=deadline_days)).isoformat(),
+                proposal.get("compliance_metric"), proposal.get("verification_method"),
+                "pending", f"Merged by Legal from {map_1} and {map_2}", db.now_iso(),
+            ),
+        )
+        set_aside_ids, keep_ids = [map_1, map_2], [merged_id]
+        for mid in set_aside_ids:
+            _set_aside(mid, f"Merged by Legal on {today} into one combined action.{reason}", "C")
+    else:
+        keep_ids = {"rule_1": [map_1], "rule_2": [map_2], "both": [map_1, map_2]}[decision]
+        set_aside_ids = [mid for mid in (map_1, map_2) if mid not in keep_ids]
+        for mid in set_aside_ids:
+            winner = db.fetch_one(
+                """SELECT r.source FROM maps m LEFT JOIN regulations r ON r.id = m.regulation_id
+                   WHERE m.id = ?""",
+                (keep_ids[0],),
+            )
+            _set_aside(
+                mid,
+                f"Set aside by Legal on {today}: the {(winner or {}).get('source') or 'other'} rule "
+                f"takes precedence.{reason}",
+                conflict_type,
+            )
+        for mid in keep_ids:
             # The router re-assigns departments after legal review, so the department
             # copies made before the conflict are archived instead of duplicated
             db.execute(
@@ -420,37 +498,97 @@ def resolve_conflict(conflict_id: str):
             )
             db.execute(
                 """UPDATE maps
-                   SET status = 'pending',
-                       conflict_flag = 0,
-                       conflict_type = NULL,
+                   SET status = 'pending', conflict_flag = 0, conflict_type = NULL,
                        conflict_detail = 'Resolved by human/legal review; returned to router'
-                   WHERE id = ?""",
+                   WHERE id = ? AND status = 'conflict'""",
                 (mid,),
             )
-        # The router worker picks the actions up; routing here as well could
-        # race with it and create duplicate department copies
-        workers.wake("router")
-        router_summary = "queued"
-    else:
-        router_summary = None
-        for mid in affected_map_ids:
-            current = db.fetch_one("SELECT status FROM maps WHERE id = ?", (mid,))
-            if current and current["status"] == "conflict":
-                db.execute(
-                    "UPDATE maps SET status = 'in_progress', conflict_flag = 0 WHERE id = ?",
-                    (mid,),
-                )
+            # Back into the similarity index, so later circulars are still checked against it
+            try:
+                index_map(mid)
+            except Exception as exc:
+                logger.warning("Could not re-index MAP %s after legal review: %s", mid, exc)
+
+    # The router worker picks the actions up; routing here as well could
+    # race with it and create duplicate department copies
+    workers.wake("router")
 
     db.insert_audit_entry(
         agent="supervisor",
         action="conflict resolved",
         detail={
             "conflict_id": conflict_id,
-            "routed_after_human_review": conflict["conflict_type"] == "B",
-            "router_summary": router_summary,
+            "conflict_type": conflict_type,
+            "legal_decision": decision,
+            "legal_note": note,
+            "set_aside_map_ids": set_aside_ids,
+            "merged_map_id": merged_id,
         },
     )
-    return {"status": "resolved", "router": router_summary}
+    return {"status": "resolved", "decision": decision, "set_aside": set_aside_ids, "merged_map_id": merged_id}
+
+
+class UndoRequest(BaseModel):
+    note: str = ""
+
+
+def _reactivate(map_id: str, detail: str):
+    """Bring an automatically archived MAP and its department copies back as active work."""
+    db.execute(
+        """UPDATE maps
+           SET status = 'in_progress', conflict_flag = 0, conflict_type = NULL, conflict_detail = ?
+           WHERE (id = ? OR parent_map_id = ?) AND status = 'superseded'""",
+        (detail, map_id, map_id),
+    )
+    try:
+        index_map(map_id)
+    except Exception as exc:
+        logger.warning("Could not re-index MAP %s after undo: %s", map_id, exc)
+
+
+@app.post("/api/conflicts/{conflict_id}/undo")
+def undo_automatic_decision(conflict_id: str, payload: UndoRequest | None = Body(default=None)):
+    """Reverse a decision the Conflict Detector made on its own:
+    a supersede brings the older action back; a merge archives the combined
+    action and brings both originals back."""
+    conflict = db.fetch_one("SELECT * FROM conflicts WHERE id = ?", (conflict_id,))
+    if not conflict:
+        raise HTTPException(status_code=404, detail="Conflict not found")
+    if conflict.get("undone_at"):
+        raise HTTPException(status_code=409, detail="This decision has already been undone.")
+    is_supersede = conflict["conflict_type"] == "A" and conflict["resolution"] == "auto_resolved"
+    is_merge = conflict["conflict_type"] == "C" and conflict["resolution"] == "merged" and conflict.get("merged_map_id")
+    if not (is_supersede or is_merge):
+        raise HTTPException(status_code=409, detail="Only automatic merges and supersedes can be undone.")
+
+    note = ((payload.note if payload else "") or "").strip()[:2000]
+    reason = f" Reason: {note}" if note else ""
+    today = db.now_iso()[:10]
+
+    if is_supersede:
+        _reactivate(conflict["map_id_1"], f"Automatic supersede undone on {today}.{reason}")
+    else:
+        merged_id = conflict["merged_map_id"]
+        db.execute(
+            """UPDATE maps
+               SET status = 'superseded', conflict_flag = 1, conflict_type = NULL, conflict_detail = ?
+               WHERE (id = ? OR parent_map_id = ?) AND status != 'completed'""",
+            (f"Automatic merge undone on {today}; the original actions are active again.{reason}",
+             merged_id, merged_id),
+        )
+        for mid in (conflict["map_id_1"], conflict["map_id_2"]):
+            _reactivate(mid, f"Automatic merge undone on {today}.{reason}")
+
+    db.execute(
+        "UPDATE conflicts SET undone_at = ?, legal_note = ? WHERE id = ?",
+        (db.now_iso(), note or None, conflict_id),
+    )
+    db.insert_audit_entry(
+        agent="supervisor",
+        action="automatic decision undone",
+        detail={"conflict_id": conflict_id, "conflict_type": conflict["conflict_type"], "note": note},
+    )
+    return {"status": "undone", "conflict_id": conflict_id}
 
 
 # =====================================================================

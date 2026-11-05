@@ -11,12 +11,8 @@ import db
 
 logger = logging.getLogger("agents.risk_score")
 
-# ── Penalty ranges per regulator (in Crores) ─────────────────────
-PENALTY_RANGES = {
-    "RBI":  {"min_cr": 2,    "max_cr": 50},
-    "SEBI": {"min_cr": 1,    "max_cr": 25},
-    "IRDAI": {"min_cr": 0.5, "max_cr": 5},
-}
+# Penalty ranges per regulator (in Crores) come from the shared regulators list
+from agents.regulators import PENALTY_RANGES
 
 DEPARTMENTS = ["IT", "Compliance", "Legal", "HR", "Risk", "Operations"]
 
@@ -163,9 +159,13 @@ def compute_risk_scores(write_audit: bool = False) -> dict:
            JOIN regulations r ON m.regulation_id = r.id
            WHERE m.status = 'overdue'"""
     )
+    unpriced = 0
     for om in overdue_maps:
-        source = om.get("source", "RBI")
-        ranges = PENALTY_RANGES.get(source, PENALTY_RANGES["RBI"])
+        ranges = PENALTY_RANGES.get(om.get("source"))
+        if not ranges:
+            # No configured penalty range for this regulator or standard: count it, don't guess
+            unpriced += 1
+            continue
         total_min_cr += ranges["min_cr"]
         total_max_cr += ranges["max_cr"]
 
@@ -173,6 +173,7 @@ def compute_risk_scores(write_audit: bool = False) -> dict:
         "min_cr": round(total_min_cr, 2),
         "max_cr": round(total_max_cr, 2),
         "overdue_count": len(overdue_maps),
+        "unpriced_overdue_count": unpriced,
     }
 
     # Write audit entry

@@ -40,15 +40,47 @@ def get_connection() -> sqlite3.Connection:
     return _conn
 
 
+def _drop_source_check(conn: sqlite3.Connection):
+    """Older databases only allowed RBI/SEBI/IRDAI as a regulation's source. SQLite cannot
+    change a CHECK in place, so rebuild the table without it (the app validates sources)."""
+    row = conn.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'regulations'").fetchone()
+    if not row or "CHECK(source IN" not in row["sql"]:
+        return
+    conn.execute("PRAGMA foreign_keys=OFF")
+    try:
+        conn.executescript("""
+        BEGIN;
+        CREATE TABLE regulations_new (
+            id TEXT PRIMARY KEY,
+            title TEXT,
+            source TEXT,
+            url TEXT,
+            raw_text TEXT,
+            doc_hash TEXT UNIQUE,
+            ingested_at TEXT,
+            status TEXT DEFAULT 'new' CHECK(status IN ('new','processing','processed','resolved'))
+        );
+        INSERT INTO regulations_new (id, title, source, url, raw_text, doc_hash, ingested_at, status)
+            SELECT id, title, source, url, raw_text, doc_hash, ingested_at, status FROM regulations;
+        DROP TABLE regulations;
+        ALTER TABLE regulations_new RENAME TO regulations;
+        CREATE INDEX IF NOT EXISTS idx_regulations_status ON regulations(status);
+        COMMIT;
+        """)
+    finally:
+        conn.execute("PRAGMA foreign_keys=ON")
+
+
 def init_db():
     """Create all tables if they do not exist."""
     conn = get_connection()
     with _lock:
+        _drop_source_check(conn)
         conn.executescript("""
         CREATE TABLE IF NOT EXISTS regulations (
             id TEXT PRIMARY KEY,
             title TEXT,
-            source TEXT CHECK(source IN ('RBI','SEBI','IRDAI')),
+            source TEXT,
             url TEXT,
             raw_text TEXT,
             doc_hash TEXT UNIQUE,
@@ -145,6 +177,16 @@ def init_db():
             conn.commit()
         except sqlite3.OperationalError:
             pass
+
+        # Schema migration: Legal's decision on a conflict (rule_1 / rule_2 / both / merge), its reasoning,
+        # the AI's proposed combined action, the MAP an automatic merge created, and when an
+        # automatic decision was undone
+        for column in ("legal_decision", "legal_note", "proposed_merge", "merged_map_id", "undone_at"):
+            try:
+                conn.execute(f"ALTER TABLE conflicts ADD COLUMN {column} TEXT")
+                conn.commit()
+            except sqlite3.OperationalError:
+                pass
 
         # Schema migration: Add evidence_file_path for file-based evidence uploads
         try:
