@@ -13,13 +13,14 @@ import os
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 
 
-def chat_llm() -> ChatOllama:
+def chat_llm(num_predict: int | None = None) -> ChatOllama:
+    """num_predict overrides the reply cap for agents that only need a short answer."""
     return ChatOllama(
         model=os.getenv("OLLAMA_MODEL", "qwen3:8b"),
         temperature=0.1,
         reasoning=os.getenv("OLLAMA_THINK", "false").lower() == "true",
         num_ctx=int(os.getenv("OLLAMA_NUM_CTX", "8192")),
-        num_predict=int(os.getenv("OLLAMA_NUM_PREDICT", "3072")),
+        num_predict=num_predict or int(os.getenv("OLLAMA_NUM_PREDICT", "3072")),
         timeout=int(os.getenv("OLLAMA_TIMEOUT_SECONDS", "600")),
     )
 

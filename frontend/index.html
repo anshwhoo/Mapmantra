@@ -363,6 +363,14 @@ body {
 .link-btn { background: none; border: none; padding: 0; color: var(--cyan); font-size: 12px; font-weight: 700; cursor: pointer; font-family: var(--font); }
 .next-step { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--glass-bg-strong); border: 1px solid var(--glass-border); }
 .next-step > div:first-child { flex: 1; min-width: 220px; }
+.ai-suggestion { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border-left: 3px solid; border-radius: var(--radius-sm); background: var(--glass-bg-strong); }
+.ai-tag { margin-left: 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px; border-radius: var(--radius-pill); color: var(--cyan); border: 1px solid rgba(6,182,212,0.4); vertical-align: middle; }
+.decision-panel { padding: 16px; border-radius: var(--radius-sm); background: var(--glass-bg-strong); border: 1px solid var(--amber); }
+.decision-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.decision-option { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border: 1px solid var(--glass-border); border-radius: var(--radius-sm); cursor: pointer; }
+.decision-option:hover { border-color: var(--glass-border-hover); }
+.decision-option.active { border-color: var(--cyan); background: rgba(6,182,212,0.08); }
+.decision-option input { margin-top: 3px; accent-color: var(--cyan); }
 @media (max-width: 900px) {
   .detail-grid { grid-template-columns: 1fr; }
   .action-row { flex-wrap: wrap; }
@@ -430,7 +438,7 @@ const riskColor = s => s >= 60 ? 'var(--red)' : s >= 30 ? 'var(--amber)' : 'var(
 const riskLevel = s => s >= 60 ? 'high' : s >= 30 ? 'medium' : 'low';
 const statusColor = s => ({completed:'var(--green)',pass:'var(--green)',satisfied:'var(--green)',assigned:'var(--blue)',
   in_progress:'var(--blue)',pending:'var(--text-3)',partial:'var(--amber)',overdue:'var(--red)',failed:'var(--red)',
-  fail:'var(--red)',conflict:'var(--red)',superseded:'var(--text-4)'}[s] || 'var(--text-3)');
+  fail:'var(--red)',conflict:'var(--red)',superseded:'var(--text-4)',not_applicable:'var(--text-4)'}[s] || 'var(--text-3)');
 const priorityColor = p => ({high:'var(--red)',medium:'var(--amber)',low:'var(--green)'}[p] || 'var(--text-3)');
 const agentColor = a => ({ingestion:'var(--cyan)',extractor:'var(--purple)',router:'#14b8a6',validator:'var(--amber)',
   supervisor:'var(--text-3)',conflict_detector:'var(--red)',threat_mapper:'var(--purple)',risk_engine:'var(--green)'}[a] || 'var(--text-3)');
@@ -725,8 +733,91 @@ function DashboardScreen({ dashboard, navigate }) {
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // INBOX SCREEN
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ── Bank profile: which circulars the ingestion filter keeps ────────────────
+const fieldStyle = {width:'100%',background:'rgba(255,255,255,0.04)',border:'1px solid var(--glass-border)',borderRadius:'var(--radius-sm)',padding:'8px 12px',color:'var(--text-1)',fontSize:13};
+
+function BankProfileCard({ onSaved }) {
+  const { data, refetch } = useApi('/api/bank-profile');
+  const [form, setForm] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState(null);
+  if (!data) return null;
+  const { profile, bank_types, activities } = data;
+  const typeName = code => (bank_types.find(t => t.code === code) || {}).name || code;
+  const toggle = code => setForm(f => ({ ...f, activities: f.activities.includes(code)
+    ? f.activities.filter(a => a !== code) : [...f.activities, code] }));
+  const save = async () => {
+    setSaving(true);
+    const res = await api('/api/bank-profile', { method: 'PUT', body: JSON.stringify(form) });
+    setSaving(false);
+    if (!res) { setMessage('Could not save the bank profile. Please try again.'); return; }
+    setForm(null);
+    setMessage(`Saved. ${plural(res.circulars_to_recheck, 'circular')} not yet processed will be checked again for this bank.`);
+    refetch();
+    onSaved && onSaved();
+  };
+
+  return (
+    <GlassCard className="mb-4" style={{ padding: '16px 20px' }}>
+      {!form ? (
+        <div className="flex justify-between items-center gap-3">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="text-xs" style={{ color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 1 }}>Circulars are filtered for</div>
+            <div className="font-bold mt-1">{profile.name}{DOT}{typeName(profile.bank_type)}</div>
+            <div className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>
+              {activities.filter(a => profile.activities.includes(a.code)).map(a => a.name).join(DOT) || 'No other banking activities selected'}
+            </div>
+          </div>
+          <button className="btn btn-outline" onClick={() => { setForm({ ...profile, activities: [...profile.activities] }); setMessage(null); }}>
+            Edit bank profile
+          </button>
+        </div>
+      ) : (
+        <div>
+          <div className="section-title">Bank profile</div>
+          <div className="text-xs mb-4" style={{ color: 'var(--text-3)' }}>
+            The ingestion agent only sends circulars meant for this kind of bank on to the other agents.
+            Circulars for other bank types (for example only urban co-operative banks or only NBFCs) are set aside as "Not applicable".
+          </div>
+          <div className="grid-2 gap-3">
+            <div>
+              <label className="text-xs" style={{ color: 'var(--text-3)', display: 'block', marginBottom: 6 }}>Bank name</label>
+              <input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={fieldStyle} />
+            </div>
+            <div>
+              <label className="text-xs" style={{ color: 'var(--text-3)', display: 'block', marginBottom: 6 }}>Type of Indian bank</label>
+              <select className="input select" value={form.bank_type} onChange={e => setForm({ ...form, bank_type: e.target.value })} style={fieldStyle}>
+                {bank_types.map(t => <option key={t.code} value={t.code}>{t.name} (e.g. {t.examples})</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="text-xs mt-4 mb-2" style={{ color: 'var(--text-3)' }}>What the bank does</div>
+          <div className="grid-2 gap-2">
+            {activities.map(a => (
+              <label key={a.code} className="text-sm" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input type="checkbox" checked={form.activities.includes(a.code)} onChange={() => toggle(a.code)} />
+                {a.name}
+              </label>
+            ))}
+          </div>
+          <div className="flex gap-2 mt-4">
+            <button className="btn btn-primary" onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save and re-check circulars'}</button>
+            <button className="btn btn-outline" onClick={() => setForm(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {message && <div className="text-xs mt-2" style={{ color: message.startsWith('Saved') ? 'var(--green)' : 'var(--red)' }}>{message}</div>}
+    </GlassCard>
+  );
+}
+
+const DECIDED_BY = { rules: 'decided by rules', ai: 'decided by AI', default: 'kept to be safe', override: 'decided by Compliance' };
+
 function InboxScreen({ navigate }) {
   const { data: regs, loading, refetch } = usePolling('/api/regulations', 30000);
+  const { data: regulators } = useApi('/api/regulators');
+  const [tab, setTab] = useState('applies');
+  const [overriding, setOverriding] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [triggeringPipeline, setTriggeringPipeline] = useState(false);
@@ -753,6 +844,16 @@ function InboxScreen({ navigate }) {
     setUploading(false);
     refetch();
   };
+
+  const overrideApplicability = async (r, applicable) => {
+    setOverriding(r.id);
+    await api(`/api/regulations/${r.id}/applicability`, { method: 'POST', body: JSON.stringify({ applicable }) });
+    setOverriding(null);
+    refetch();
+  };
+  const allRegs = regs || [];
+  const notApplicable = allRegs.filter(r => r.status === 'not_applicable');
+  const shownRegs = tab === 'skipped' ? notApplicable : allRegs.filter(r => r.status !== 'not_applicable');
 
   const triggerPipeline = async () => {
     setTriggeringPipeline(true);
@@ -852,9 +953,11 @@ function InboxScreen({ navigate }) {
               <div>
                 <label className="text-xs" style={{color:'var(--text-3)',display:'block',marginBottom:6}}>Source</label>
                 <select name="source" defaultValue="RBI" className="input select" style={{width:'100%',background:'rgba(255,255,255,0.04)',border:'1px solid var(--glass-border)',borderRadius:'var(--radius-sm)',padding:'8px 12px',color:'var(--text-1)',fontSize:13}}>
-                  <option value="RBI">RBI</option>
-                  <option value="SEBI">SEBI</option>
-                  <option value="IRDAI">IRDAI</option>
+                  {regulators ? [['regulator', 'Regulators'], ['standard', 'Standards']].map(([kind, label]) => (
+                    <optgroup key={kind} label={label}>
+                      {regulators.filter(r => r.kind === kind).map(r => <option key={r.code} value={r.code}>{r.code} - {r.name}</option>)}
+                    </optgroup>
+                  )) : <option value="RBI">RBI</option>}
                 </select>
               </div>
             </div>
@@ -872,23 +975,56 @@ function InboxScreen({ navigate }) {
         </GlassCard>
       )}
 
+      <BankProfileCard onSaved={refetch} />
+
+      <div className="flex gap-2 mb-4">
+        <button className={`btn ${tab === 'applies' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setTab('applies')}>
+          For this bank ({allRegs.length - notApplicable.length})
+        </button>
+        <button className={`btn ${tab === 'skipped' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setTab('skipped')}>
+          Not applicable ({notApplicable.length})
+        </button>
+      </div>
+
       {loading && !regs ? <div className="flex items-center gap-2"><div className="spinner" /> Loading...</div> : (
         <div>
-          {(regs || []).map(r => (
-            <GlassCard key={r.id} className="mb-2" style={{ padding: '16px 20px' }}>
-              <div className="flex justify-between items-center">
+          {shownRegs.map(r => (
+            <GlassCard key={r.id} className="mb-2" style={{ padding: '16px 20px', opacity: r.status === 'not_applicable' ? 0.85 : 1 }}>
+              <div className="flex justify-between items-center gap-3">
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="flex gap-2 items-center mb-1">
                     <Badge label={r.source || 'Manual'} color="var(--cyan)" />
-                    <Badge label={r.status} color={statusColor(r.status)} />
+                    <Badge label={r.status.replace('_', ' ')} color={statusColor(r.status)} />
                   </div>
                   <div className="font-bold truncate">{r.title}</div>
-                  <div className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>Ingested {timeAgo(r.ingested_at)} / {r.map_count || 0} MAPs extracted</div>
+                  <div className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>
+                    Ingested {timeAgo(r.ingested_at)}{r.status !== 'not_applicable' && ` / ${r.map_count || 0} MAPs extracted`}
+                  </div>
+                  {r.applicability_reason ? (
+                    <div className="text-xs mt-2" style={{ color: r.status === 'not_applicable' ? 'var(--amber)' : 'var(--green)' }}>
+                      {r.status === 'not_applicable' ? 'Not for this bank: ' : 'Applies: '}{r.applicability_reason}
+                      <span style={{ color: 'var(--text-4)' }}>{DOT}{DECIDED_BY[r.applicability_method] || ''}</span>
+                    </div>
+                  ) : r.status === 'new' && (
+                    <div className="text-xs mt-2" style={{ color: 'var(--text-3)' }}>Waiting for the applicability check...</div>
+                  )}
                 </div>
+                {r.status === 'not_applicable' && (
+                  <button className="btn btn-outline" disabled={overriding === r.id} onClick={() => overrideApplicability(r, true)}>
+                    {overriding === r.id ? 'Sending...' : 'Process anyway'}
+                  </button>
+                )}
+                {r.status === 'new' && (
+                  <button className="btn btn-outline" disabled={overriding === r.id} onClick={() => overrideApplicability(r, false)}>
+                    {overriding === r.id ? 'Saving...' : 'Not for us'}
+                  </button>
+                )}
               </div>
             </GlassCard>
           ))}
-          {(!regs || regs.length === 0) && <div className="text-sm" style={{ color: 'var(--text-3)', textAlign: 'center', padding: 40 }}>No regulations ingested yet. Upload a circular or run the pipeline.</div>}
+          {shownRegs.length === 0 && <div className="text-sm" style={{ color: 'var(--text-3)', textAlign: 'center', padding: 40 }}>
+            {tab === 'skipped' ? 'No circulars have been set aside as not applicable.' : 'No regulations ingested yet. Upload a circular or run the pipeline.'}
+          </div>}
         </div>
       )}
     </div>
@@ -914,10 +1050,11 @@ function actionState(m) {
     case 'completed':
       return { group: 'completed', label: 'Completed', tone: 'var(--green)', next: 'View evidence', rank: 8 };
     case 'superseded':
-      return { group: 'archived', label: m.conflict_type === 'C' ? 'Merged into another action' : m.conflict_type === 'A' ? 'Replaced by a newer rule' : 'Archived',
+      return { group: 'archived', label: decidedByLegal(m) ? (m.conflict_detail.startsWith('Merged') ? 'Merged by Legal into one action' : 'Set aside by Legal')
+                                        : m.conflict_type === 'C' ? 'Merged into another action' : m.conflict_type === 'A' ? 'Replaced by a newer rule' : 'Archived',
                tone: 'var(--text-3)', next: 'View', rank: 10 };
     case 'conflict':
-      return { group: 'hold', label: 'On hold: conflicts with another regulation', tone: 'var(--red)', next: 'See conflict', rank: 3 };
+      return { group: 'hold', label: 'On hold: awaiting Legal review', tone: 'var(--red)', next: 'See conflict', rank: 3 };
     case 'pending':
       return { group: 'waiting', label: 'Being assigned to a department', tone: 'var(--text-2)', next: 'View', rank: 9 };
     case 'partial':
@@ -931,6 +1068,7 @@ function actionState(m) {
     }
   }
 }
+const decidedByLegal = m => /^(Set aside|Merged) by Legal/.test(m.conflict_detail || '');
 const isOverdue = m => m.status === 'overdue' || (ACTIONABLE.includes(m.status) && (daysRemaining(m.deadline_date).days ?? 1) < 0);
 
 function StatePill({ state }) {
@@ -1156,6 +1294,7 @@ function statusMessage(m, conflict, evidence) {
       return `Evidence was accepted${ok ? ` on ${fmtDate(ok.submitted_at)}` : ''}. Nothing more is needed.`;
     }
     case 'superseded':
+      if (decidedByLegal(m)) return `${m.conflict_detail} No evidence is needed.`;
       return m.conflict_type === 'C'
         ? 'This action overlapped with another regulation and was merged into a single combined action. Work on the combined action instead.'
         : m.conflict_type === 'A'
@@ -1163,8 +1302,8 @@ function statusMessage(m, conflict, evidence) {
           : `This action is archived. ${m.conflict_detail || 'No evidence is needed.'}`;
     case 'conflict':
       return conflict && conflict.legal_assigned_at
-        ? `This requirement contradicts another regulation. Legal has been reviewing it since ${fmtDate(conflict.legal_assigned_at)}. Evidence can be submitted once the conflict is resolved.`
-        : 'This requirement contradicts another regulation and is waiting for a manager to assign it to Legal. Evidence cannot be submitted until the conflict is resolved.';
+        ? `Another regulation has a related rule, and Legal has been reviewing it since ${fmtDate(conflict.legal_assigned_at)}. Evidence can be submitted once Legal decides.`
+        : 'Another regulation has a related rule. This action is on hold until a manager assigns it to Legal and Legal decides. Evidence cannot be submitted yet.';
     case 'pending':
       return 'The system is deciding which department owns this action. Check back shortly.';
     case 'partial':
@@ -1471,12 +1610,17 @@ function LegacyConflictsScreen() {
 // ════════════════════════════════════════════════════════════════════
 const CONFLICT_STEPS = [
   { key: 'review', label: 'Needs review', color: 'var(--red)', hint: 'Two regulations ask for things that cannot both be done. A manager assigns them to Legal.' },
-  { key: 'legal', label: 'With Legal', color: 'var(--amber)', hint: 'Legal decides how the bank will comply with both regulators.' },
-  { key: 'resolved', label: 'Resolved', color: 'var(--green)', hint: 'Legal has decided. Both actions are back with departments.' },
-  { key: 'auto', label: 'Handled automatically', color: 'var(--cyan)', hint: 'Overlapping actions merged and outdated rules replaced by the system.' },
+  { key: 'legal', label: 'With Legal', color: 'var(--amber)', hint: 'Legal decides which rule the bank will follow.' },
+  { key: 'resolved', label: 'Resolved', color: 'var(--green)', hint: 'Legal has decided. The chosen actions are back with departments.' },
+  { key: 'auto', label: 'Handled automatically', color: 'var(--cyan)', hint: 'Overlapping actions merged and outdated rules replaced by the AI. Undo any decision you disagree with.' },
 ];
 
 const conflictStage = c => c.resolution === 'resolved' ? 'resolved' : c.legal_assigned_at ? 'legal' : 'review';
+const CONFLICT_SUGGESTIONS = {
+  A: { label: 'Rule 2 replaces Rule 1', color: 'var(--blue)', meaning: 'The newer rule looks like an amendment of the older one.' },
+  B: { label: 'Contradiction', color: 'var(--red)', meaning: 'Both rules cannot be followed at the same time.' },
+  C: { label: 'Overlap, merge them', color: 'var(--cyan)', meaning: 'Both rules ask for much the same thing.' },
+};
 
 function ConflictsScreen({ navigate }) {
   const { data: conflicts, loading, refetch } = usePolling('/api/conflicts', 15000);
@@ -1486,23 +1630,26 @@ function ConflictsScreen({ navigate }) {
   const [error, setError] = useState('');
 
   const all = conflicts || [];
-  const contradictions = all.filter(c => (c.conflict_type || 'B') === 'B');
+  const reviewed = all.filter(c => ['pending_legal', 'resolved'].includes(c.resolution));
   const groups = {
-    review: contradictions.filter(c => conflictStage(c) === 'review'),
-    legal: contradictions.filter(c => conflictStage(c) === 'legal'),
-    resolved: contradictions.filter(c => conflictStage(c) === 'resolved'),
-    auto: all.filter(c => (c.conflict_type || 'B') !== 'B'),
+    review: reviewed.filter(c => conflictStage(c) === 'review'),
+    legal: reviewed.filter(c => conflictStage(c) === 'legal'),
+    resolved: reviewed.filter(c => conflictStage(c) === 'resolved'),
+    auto: all.filter(c => !['pending_legal', 'resolved'].includes(c.resolution)),
   };
   const current = tab || (groups.review.length ? 'review' : groups.legal.length ? 'legal' : 'resolved');
   const step = CONFLICT_STEPS.find(s => s.key === current);
 
-  const post = async (url, id) => {
+  const post = async (url, id, body, nextTab) => {
     setBusy(id);
     setError('');
     try {
-      const r = await fetch(url, { method: 'POST' });
-      const body = await r.json().catch(() => ({}));
-      if (!r.ok) setError(body.detail || 'That did not work. Please try again.');
+      const r = await fetch(url, body
+        ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+        : { method: 'POST' });
+      const res = await r.json().catch(() => ({}));
+      if (!r.ok) setError(res.detail || 'That did not work. Please try again.');
+      else if (nextTab) setTab(nextTab);
     } catch {
       setError('Could not reach the server. Please try again.');
     }
@@ -1516,7 +1663,7 @@ function ConflictsScreen({ navigate }) {
       <div className="mb-4">
         <h1 className="page-title">Conflicts</h1>
         <div className="text-sm mt-1" style={{ color: 'var(--text-2)' }}>
-          When two regulations ask for things that cannot both be done, the affected actions are put on hold until Legal decides how to comply.
+          Overlaps and outdated rules are handled automatically, and you can undo them. Contradictions are put on hold until Legal decides which rule the bank follows.
         </div>
       </div>
 
@@ -1539,12 +1686,13 @@ function ConflictsScreen({ navigate }) {
       {loading && !conflicts ? <div className="flex items-center gap-2"><div className="spinner" /> Loading...</div> : (
         <div>
           {current === 'auto'
-            ? groups.auto.map(c => <AutoConflictRow key={c.id} c={c} navigate={navigate} />)
+            ? groups.auto.map(c => <AutoConflictRow key={c.id} c={c} busy={busy === c.id}
+                onUndo={note => post(`/api/conflicts/${c.id}/undo`, c.id, { note })} />)
             : groups[current].map(c => (
                 <ConflictCard key={c.id} c={c} navigate={navigate} busy={busy === c.id} confirming={confirming === c.id}
-                  onAssign={() => post(`/api/conflicts/${c.id}/assign-legal`, c.id)}
+                  onAssign={() => post(`/api/conflicts/${c.id}/assign-legal`, c.id, null, 'legal')}
                   onAskResolve={() => setConfirming(c.id)} onCancel={() => setConfirming(null)}
-                  onResolve={() => post(`/api/conflicts/${c.id}/resolve`, c.id)} />
+                  onResolve={(decision, note) => post(`/api/conflicts/${c.id}/resolve`, c.id, { decision, note }, 'resolved')} />
               ))}
           {groups[current].length === 0 && (
             <div className="text-sm" style={{ color: 'var(--text-2)', textAlign: 'center', padding: 40 }}>Nothing here right now.</div>
@@ -1555,13 +1703,20 @@ function ConflictsScreen({ navigate }) {
   );
 }
 
-function RulePanel({ n, source, regulation, dept, deadline, status, action, onOpen }) {
-  const st = actionState({ status, deadline_date: deadline });
+function RulePanel({ n, source, regulation, dept, deadline, status, action, onOpen, outcome }) {
+  const st = outcome === 'set_aside'
+    ? { label: 'Set aside by Legal', tone: 'var(--text-3)' }
+    : outcome === 'merged'
+    ? { label: 'Merged by Legal into one action', tone: 'var(--text-3)' }
+    : actionState({ status, deadline_date: deadline });
   return (
-    <div className="rule-panel">
+    <div className="rule-panel" style={outcome === 'set_aside' || outcome === 'merged' ? { opacity: 0.7 } : outcome === 'followed' ? { borderColor: 'var(--green)' } : null}>
       <div className="flex justify-between items-center gap-2 flex-wrap">
         <span className="text-xs font-bold" style={{ color: 'var(--text-2)' }}>RULE {n}</span>
-        {source && <Badge label={source} color="var(--purple)" />}
+        <span className="flex gap-2 items-center">
+          {outcome === 'followed' && <Badge label="Bank follows this rule" color="var(--green)" />}
+          {source && <Badge label={source} color="var(--purple)" />}
+        </span>
       </div>
       <div className="text-xs mt-1" style={{ color: 'var(--text-2)' }}>{regulation || 'Unknown circular'}</div>
       <div className="text-sm font-bold mt-2" style={{ lineHeight: 1.5 }}>{action}</div>
@@ -1575,7 +1730,33 @@ function RulePanel({ n, source, regulation, dept, deadline, status, action, onOp
 
 function ConflictCard({ c, navigate, busy, confirming, onAssign, onAskResolve, onCancel, onResolve }) {
   const stage = conflictStage(c);
-  const [why, suggestion] = (c.description || '').split(' | ');
+  const [decision, setDecision] = useState('');
+  const [note, setNote] = useState('');
+  const src1 = c.map_1_source || 'Rule 1', src2 = c.map_2_source || 'Rule 2';
+  const type = c.conflict_type || 'B';
+  let proposal = null;
+  try { proposal = c.proposed_merge ? JSON.parse(c.proposed_merge) : null; } catch {}
+  const suggestion = CONFLICT_SUGGESTIONS[type];
+  const follow1 = { key: 'rule_1', title: `Follow Rule 1 (${src1})`, effect: `Rule 1 goes back to departments. Rule 2 (${src2}) is set aside and archived.` };
+  const follow2 = { key: 'rule_2', title: `Follow Rule 2 (${src2})`, effect: `Rule 2 goes back to departments. Rule 1 (${src1}) is set aside and archived.` };
+  const keepBoth = { key: 'both', title: type === 'C' ? 'Keep both separately' : 'Keep both', effect: type === 'C' ? 'They are different enough to track separately. Both go back to departments.' : 'Legal found a way to meet both. Both rules go back to departments.' };
+  const options = {
+    A: [{ ...follow2, title: `Rule 2 (${src2}) replaces Rule 1`, effect: `The newer rule goes back to departments. Rule 1 (${src1}) is archived.`, ai: true },
+        { ...follow1, title: `Keep Rule 1 (${src1})`, effect: `Rule 2 does not replace it. Rule 2 (${src2}) is set aside and archived.` }, keepBoth],
+    B: [follow1, follow2, keepBoth],
+    C: [...(proposal ? [{ key: 'merge', title: 'Merge into one action', effect: 'Both are archived and replaced by the combined action shown above.', ai: true }] : []),
+        keepBoth, follow1, follow2],
+  }[type];
+  const chosen = options.find(o => o.key === decision);
+  const outcome1 = { rule_1: 'followed', rule_2: 'set_aside', merge: 'merged' }[c.legal_decision] || null;
+  const outcome2 = { rule_2: 'followed', rule_1: 'set_aside', merge: 'merged' }[c.legal_decision] || null;
+  const decidedText = {
+    rule_1: `follow Rule 1 (${src1}). Rule 2 (${src2}) was set aside.`,
+    rule_2: `follow Rule 2 (${src2}). Rule 1 (${src1}) was set aside.`,
+    both: 'keep both rules. Both actions are active again.',
+    merge: 'merge both rules into one combined action, now with departments.',
+  }[c.legal_decision];
+  const [why, recommendation] = (c.description || '').split(' | ');
   const timeline = [
     { label: 'Detected', date: c.created_at, done: true },
     { label: 'Assigned to Legal', date: c.legal_assigned_at, done: !!c.legal_assigned_at },
@@ -1595,23 +1776,36 @@ function ConflictCard({ c, navigate, busy, confirming, onAssign, onAskResolve, o
         ))}
       </div>
 
-      <div className="text-xs font-bold" style={{ color: 'var(--text-2)' }}>WHY THEY CONFLICT</div>
-      <div className="text-sm mt-1" style={{ lineHeight: 1.55 }}>{why || 'These two requirements cannot both be satisfied.'}</div>
-      {suggestion && (
+      <div className="ai-suggestion mb-3" style={{ borderColor: suggestion.color }}>
+        <Badge label={`AI suggests: ${suggestion.label}`} color={suggestion.color} />
+        <span className="text-sm" style={{ color: 'var(--text-2)' }}>{suggestion.meaning}</span>
+      </div>
+      <div className="text-xs font-bold" style={{ color: 'var(--text-2)' }}>WHY</div>
+      <div className="text-sm mt-1" style={{ lineHeight: 1.55 }}>{why || 'The AI found these two requirements are related.'}</div>
+      {recommendation && (
         <>
           <div className="text-xs font-bold mt-3" style={{ color: 'var(--text-2)' }}>SUGGESTED APPROACH</div>
-          <div className="text-sm mt-1" style={{ lineHeight: 1.55 }}>{suggestion}</div>
+          <div className="text-sm mt-1" style={{ lineHeight: 1.55 }}>{recommendation}</div>
         </>
+      )}
+      {proposal && (
+        <div className="rule-panel mt-3" style={{ borderStyle: 'dashed' }}>
+          <div className="text-xs font-bold" style={{ color: 'var(--text-2)' }}>PROPOSED COMBINED ACTION</div>
+          <div className="text-sm font-bold mt-2" style={{ lineHeight: 1.5 }}>{proposal.action_description}</div>
+          <div className="text-xs mt-2" style={{ color: 'var(--text-2)' }}>
+            {proposal.department}{DOT}{proposal.priority} priority{DOT}{proposal.deadline_days} days after the decision
+          </div>
+        </div>
       )}
 
       <div className="rule-grid mt-4">
         <RulePanel n={1} source={c.map_1_source} regulation={c.map_1_regulation} dept={c.map_1_dept} deadline={c.map_1_deadline}
-          status={c.map_1_status} action={c.map_1_action} onOpen={() => navigate('maps', { mapId: c.map_id_1 })} />
+          status={c.map_1_status} action={c.map_1_action} outcome={outcome1} onOpen={() => navigate('maps', { mapId: c.map_id_1 })} />
         <RulePanel n={2} source={c.map_2_source} regulation={c.map_2_regulation} dept={c.map_2_dept} deadline={c.map_2_deadline}
-          status={c.map_2_status} action={c.map_2_action} onOpen={() => navigate('maps', { mapId: c.map_id_2 })} />
+          status={c.map_2_status} action={c.map_2_action} outcome={outcome2} onOpen={() => navigate('maps', { mapId: c.map_id_2 })} />
       </div>
 
-      <div className="next-step mt-4">
+      {stage !== 'legal' && <div className="next-step mt-4">
         {stage === 'review' && (
           <>
             <div className="text-sm" style={{ lineHeight: 1.5 }}>
@@ -1620,47 +1814,95 @@ function ConflictCard({ c, navigate, busy, confirming, onAssign, onAskResolve, o
             <button className="btn btn-primary" disabled={busy} onClick={onAssign}>{busy ? 'Assigning...' : 'Assign to Legal'}</button>
           </>
         )}
-        {stage === 'legal' && !confirming && (
-          <>
-            <div className="text-sm" style={{ lineHeight: 1.5 }}>
-              <strong>Next step:</strong> once Legal has agreed how the bank will comply, mark this resolved. Both actions are then re-assigned to departments and become active again.
-            </div>
-            <button className="btn btn-primary" onClick={onAskResolve}>Mark as resolved</button>
-          </>
-        )}
-        {stage === 'legal' && confirming && (
-          <>
-            <div className="text-sm" style={{ lineHeight: 1.5, color: 'var(--amber)' }}>
-              Confirm Legal has agreed the approach. Both actions will leave hold and be re-assigned to departments.
-            </div>
-            <div className="flex gap-2">
-              <button className="btn btn-outline" onClick={onCancel} disabled={busy}>Cancel</button>
-              <button className="btn btn-primary" onClick={onResolve} disabled={busy}>{busy ? 'Resolving...' : 'Yes, resolve'}</button>
-            </div>
-          </>
-        )}
         {stage === 'resolved' && (
-          <div className="text-sm" style={{ lineHeight: 1.5, color: 'var(--green)' }}>
-            Resolved on {fmtDate(c.resolved_at)}. Both actions are active again; open them above to submit evidence.
+          <div className="text-sm" style={{ lineHeight: 1.5 }}>
+            <div style={{ color: 'var(--green)' }}>
+              {decidedText
+                ? <>Legal decided on {fmtDate(c.resolved_at)} to {decidedText}</>
+                : <>Resolved on {fmtDate(c.resolved_at)}. Both actions are active again.</>}
+            </div>
+            {c.legal_note && <div className="mt-2" style={{ color: 'var(--text-2)' }}><strong>Legal's reasoning:</strong> {c.legal_note}</div>}
           </div>
         )}
-      </div>
+      </div>}
+
+      {stage === 'legal' && (
+        <div className="decision-panel mt-4">
+          <div className="text-sm font-bold">Legal decision: what will the bank do?</div>
+          <div className="decision-options mt-3">
+            {options.map(o => (
+              <label key={o.key} className={`decision-option ${decision === o.key ? 'active' : ''}`}>
+                <input type="radio" name={`decision-${c.id}`} value={o.key} checked={decision === o.key}
+                  onChange={() => { setDecision(o.key); onCancel(); }} disabled={busy} />
+                <span>
+                  <span className="text-sm font-bold" style={{ display: 'block' }}>{o.title}{o.ai && <span className="ai-tag">AI suggestion</span>}</span>
+                  <span className="text-xs" style={{ color: 'var(--text-2)', display: 'block', marginTop: 4, lineHeight: 1.45 }}>{o.effect}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <label className="text-xs font-bold mt-3" style={{ display: 'block', color: 'var(--text-2)' }} htmlFor={`note-${c.id}`}>LEGAL'S REASONING (SAVED TO THE AUDIT TRAIL)</label>
+          <textarea id={`note-${c.id}`} className="evidence-input mt-1" rows="3" value={note} onChange={e => setNote(e.target.value)} disabled={busy}
+            placeholder="Example: RBI data localisation applies to payment data; the DR site will stay within India." />
+          {!confirming ? (
+            <button className="btn btn-primary mt-3" disabled={!decision || busy} onClick={onAskResolve}>Record decision</button>
+          ) : (
+            <div className="flex gap-2 items-center flex-wrap mt-3">
+              <span className="text-sm" style={{ color: 'var(--amber)', flex: 1, minWidth: 220, lineHeight: 1.5 }}>
+                Confirm: {chosen ? chosen.title : ''}. {chosen ? chosen.effect : ''}
+              </span>
+              <button className="btn btn-outline" onClick={onCancel} disabled={busy}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => onResolve(decision, note)} disabled={busy}>{busy ? 'Recording...' : 'Yes, record decision'}</button>
+            </div>
+          )}
+        </div>
+      )}
     </GlassCard>
   );
 }
 
-function AutoConflictRow({ c, navigate }) {
+function AutoConflictRow({ c, busy, onUndo }) {
   const merged = c.conflict_type === 'C';
+  const [undoing, setUndoing] = useState(false);
+  const [note, setNote] = useState('');
+  const canUndo = !c.undone_at && (c.conflict_type === 'A' || (merged && c.merged_map_id));
+  const what = merged
+    ? 'The combined action is archived and both original actions become active again.'
+    : 'The older action becomes active again alongside the newer one.';
   return (
-    <GlassCard className="mb-2" style={{ padding: '14px 18px' }}>
+    <GlassCard className="mb-2" style={{ padding: '14px 18px', opacity: c.undone_at ? 0.75 : 1 }}>
       <div className="flex justify-between items-center gap-2 flex-wrap mb-2">
-        <Badge label={merged ? 'Merged: overlapping actions' : 'Replaced: newer rule'} color={merged ? 'var(--cyan)' : 'var(--text-2)'} />
+        <span className="flex gap-2 items-center flex-wrap">
+          <Badge label={merged ? 'Merged: overlapping actions' : 'Replaced: newer rule'} color={merged ? 'var(--cyan)' : 'var(--text-2)'} />
+          {c.undone_at && <Badge label="Undone" color="var(--amber)" />}
+        </span>
         <span className="text-xs" style={{ color: 'var(--text-2)' }}>{fmtDate(c.resolved_at || c.created_at)}</span>
       </div>
       <div className="text-sm" style={{ lineHeight: 1.5 }}>{(c.description || '').split(' | ')[0] || 'Handled automatically.'}</div>
       <div className="text-xs mt-2" style={{ color: 'var(--text-2)', lineHeight: 1.5 }}>
         {c.map_1_source || '?'}: {c.map_1_action}<br />{c.map_2_source || '?'}: {c.map_2_action}
       </div>
+      {c.undone_at && (
+        <div className="text-sm mt-3" style={{ color: 'var(--amber)', lineHeight: 1.5 }}>
+          Undone on {fmtDate(c.undone_at)}. {merged ? 'Both original actions are active again.' : 'The older action is active again.'}
+          {c.legal_note && <span style={{ color: 'var(--text-2)' }}> Reason: {c.legal_note}</span>}
+        </div>
+      )}
+      {canUndo && !undoing && (
+        <button className="btn btn-outline mt-3" style={{ fontSize: 12 }} onClick={() => setUndoing(true)}>Undo this decision</button>
+      )}
+      {canUndo && undoing && (
+        <div className="decision-panel mt-3">
+          <div className="text-sm" style={{ lineHeight: 1.5 }}>{what}</div>
+          <label className="text-xs font-bold mt-3" style={{ display: 'block', color: 'var(--text-2)' }} htmlFor={`undo-${c.id}`}>REASON (SAVED TO THE AUDIT TRAIL)</label>
+          <textarea id={`undo-${c.id}`} className="evidence-input mt-1" rows="2" value={note} onChange={e => setNote(e.target.value)} disabled={busy}
+            placeholder="Example: privacy controls and MFA are different controls and need separate evidence." />
+          <div className="flex gap-2 mt-3">
+            <button className="btn btn-outline" onClick={() => setUndoing(false)} disabled={busy}>Cancel</button>
+            <button className="btn btn-primary" onClick={() => onUndo(note)} disabled={busy}>{busy ? 'Undoing...' : 'Yes, undo'}</button>
+          </div>
+        </div>
+      )}
     </GlassCard>
   );
 }
@@ -1992,7 +2234,8 @@ function RiskReportScreen() {
         <GlassCard style={{textAlign:'center'}}><div className="text-xs" style={{color:'var(--text-4)'}}>Minimum Exposure</div><div style={{fontSize:24,fontWeight:900,color:'var(--amber)',margin:'8px 0'}}>INR {fin.min_cr||0} Crores</div></GlassCard>
         <GlassCard style={{textAlign:'center'}}><div className="text-xs" style={{color:'var(--text-4)'}}>Maximum Exposure</div><div style={{fontSize:24,fontWeight:900,color:'var(--red)',margin:'8px 0'}}>INR {fin.max_cr||0} Crores</div></GlassCard>
       </div>
-      <div className="text-xs mt-2" style={{color:'var(--text-4)',textAlign:'center'}}>Based on RBI (INR 2Cr-INR 50Cr), SEBI (INR 1Cr-INR 25Cr), and IRDAI (INR 50L-INR 5Cr) penalty ranges per overdue MAP.</div>
+      <div className="text-xs mt-2" style={{color:'var(--text-4)',textAlign:'center'}}>Based on RBI (INR 2Cr-INR 50Cr), SEBI (INR 1Cr-INR 25Cr), and IRDAI (INR 50L-INR 5Cr) penalty ranges per overdue MAP.
+        {fin.unpriced_overdue_count > 0 && ` ${fin.unpriced_overdue_count} overdue MAP(s) from other regulators or standards are not priced, as no penalty range is configured for them.`}</div>
     </div>
   );
 }

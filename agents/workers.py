@@ -7,7 +7,8 @@ supervision all progress at the same time on different regulations and MAPs.
 The extractor takes manual uploads first, then the newest circulars; later
 stages work oldest-first so nothing already extracted is starved. Per-item
 stage order is kept by the queue queries:
-  regulation 'new' → extractor → MAP 'pending' → router → MAP 'in_progress'
+  regulation 'new' → applicability filter ('not_applicable' stops here)
+  → extractor → MAP 'pending' → router → MAP 'in_progress'
   → conflict detector ('conflict_checked') → threat mapper ('ATT&CK mapped')
   → finalizer marks the regulation 'processed'.
 Ingestion and the supervisor run on fixed intervals.
@@ -21,6 +22,7 @@ from typing import Callable
 
 import db
 from agents.ingestion import run_ingestion
+from agents.applicability import screen_and_store
 from agents.extractor import run_extractor
 from agents.router import run_router
 from agents.conflict import run_conflict_detector
@@ -172,6 +174,10 @@ def _extract_step() -> int:
         if not reg:
             return 0
         reg_id = reg["id"]
+    # Ingestion's applicability filter runs first: circulars meant for other kinds of banks stop here
+    reg = db.fetch_one("SELECT screened_at FROM regulations WHERE id = ?", (reg_id,))
+    if not reg["screened_at"] and not screen_and_store(reg_id):
+        return 1
     run_extractor(regulation_ids=[reg_id])
     after = db.fetch_one("SELECT status FROM regulations WHERE id = ?", (reg_id,))
     if after and after["status"] == "new":
@@ -342,6 +348,7 @@ def queue_depths() -> dict:
                 AND id NOT IN ({THREAT_MAPPED_IDS})"""
         ),
         "regulations_processing": count("SELECT id FROM regulations WHERE status = 'processing'"),
+        "regulations_not_applicable": count("SELECT id FROM regulations WHERE status = 'not_applicable'"),
         "deferred_for_retry": len(_deferred_ids()),
     }
 
